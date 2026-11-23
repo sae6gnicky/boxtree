@@ -1,0 +1,2855 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>박스트리 스튜디오 - 크리스마스 박스 트리 메이커</title>
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@600;700&family=Inter:wght@400;500;600;700&family=Jua&family=Noto+Sans+KR:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <style>
+    body {
+      font-family: 'Noto Sans KR', 'Inter', sans-serif;
+      background-color: #f8fafc;
+      color: #0f172a;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    /* 투명 배경 체커보드 패턴 */
+    .checkerboard {
+      background-color: #ffffff;
+      background-image:
+        linear-gradient(45deg, #e2e8f0 25%, transparent 25%),
+        linear-gradient(-45deg, #e2e8f0 25%, transparent 25%),
+        linear-gradient(45deg, transparent 75%, #e2e8f0 75%),
+        linear-gradient(-45deg, transparent 75%, #e2e8f0 75%);
+      background-size: 16px 16px;
+      background-position: 0 0, 0 8px, 8px -8px, -8px 0px;
+    }
+
+    /* 커스텀 스크롤바 */
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: transparent;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #cbd5e1;
+      border-radius: 9999px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #94a3b8;
+    }
+
+    /* 슬라이더 */
+    input[type="range"] {
+      accent-color: #be123c;
+    }
+
+    /* 로딩 스피너 */
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+    .spinner {
+      animation: spin 0.9s linear infinite;
+    }
+  </style>
+</head>
+<body class="min-h-screen flex flex-col">
+
+  <!-- 상단 헤더 -->
+  <header class="sticky top-0 z-30 bg-white/90 backdrop-blur-md border-b border-slate-200 px-4 sm:px-6 py-3">
+    <div class="max-w-[1600px] mx-auto flex flex-wrap items-center justify-between gap-3">
+      <div class="flex items-center gap-2.5">
+        <div class="w-9 h-9 rounded-xl bg-gradient-to-br from-rose-600 to-red-800 flex items-center justify-center text-white shadow-sm text-lg">
+          🎄
+        </div>
+        <div>
+          <h1 class="text-base sm:text-lg font-extrabold tracking-tight text-slate-900 leading-tight">
+            박스트리 스튜디오
+          </h1>
+          <p class="text-[11px] sm:text-xs text-slate-500 font-medium">
+            인원별 자동 트리 구성 · AI 박스 크롭 &amp; 누끼 · 고해상도 저장
+          </p>
+        </div>
+      </div>
+
+      <div class="flex items-center gap-2">
+        <button id="btnFrontMode" type="button"
+          class="px-3 py-2 rounded-xl text-xs sm:text-sm font-semibold border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 transition flex items-center gap-1.5">
+          <span>⬆️</span>
+          <span>레이어 앞으로</span>
+        </button>
+        <button id="btnSwapMode" type="button"
+          class="px-3 py-2 rounded-xl text-xs sm:text-sm font-semibold border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 transition flex items-center gap-1.5">
+          <span>⇄</span>
+          <span>자리 바꾸기</span>
+        </button>
+        <button id="btnDownloadTop" type="button"
+          class="px-4 py-2 rounded-xl text-xs sm:text-sm font-bold bg-gradient-to-r from-rose-600 to-red-700 text-white hover:from-rose-700 hover:to-red-800 shadow-sm hover:shadow transition flex items-center gap-1.5">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M7 10l5 5m0 0l5-5m-5 5V3" />
+          </svg>
+          <span>고해상도 저장</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- 메인 작업 공간 -->
+  <main class="flex-1 max-w-[1600px] w-full mx-auto p-3 sm:p-5 grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
+
+    <!-- 왼쪽 컨트롤 패널 -->
+    <aside class="lg:col-span-4 xl:col-span-4 space-y-4 order-2 lg:order-1">
+
+      <!-- 1. 인원 수 & 트리 구성 -->
+      <section class="bg-white rounded-2xl border border-slate-200 shadow-sm p-4 space-y-3.5">
+        <div class="flex items-center justify-between">
+          <h2 class="text-sm font-bold text-slate-800 flex items-center gap-1.5">
+            <span class="w-5 h-5 rounded-full bg-rose-100 text-rose-700 text-xs flex items-center justify-center font-extrabold">1</span>
+            인원 수 &amp; 트리 모양 설정
+          </h2>
+          <span id="layoutSummaryBadge" class="text-[11px] font-semibold px-2.5 py-0.5 rounded-full bg-rose-50 text-rose-700 border border-rose-100">
+            총 22명 (1-2-3-4-5-7)
+          </span>
+        </div>
+
+        <!-- 인원 수 입력 스테퍼 -->
+        <div class="flex items-center gap-2">
+          <label for="peopleCountInput" class="text-xs font-semibold text-slate-600 shrink-0">참여 인원</label>
+          <div class="flex items-center flex-1 bg-slate-50 border border-slate-200 rounded-xl p-1">
+            <button id="btnDecreaseCount" type="button"
+              class="w-9 h-9 rounded-lg bg-white border border-slate-200 text-slate-700 font-bold hover:bg-slate-100 active:scale-95 transition">−</button>
+            <input id="peopleCountInput" type="number" min="1" max="50" value="22"
+              class="w-full text-center bg-transparent font-extrabold text-base text-slate-900 focus:outline-none" />
+            <button id="btnIncreaseCount" type="button"
+              class="w-9 h-9 rounded-lg bg-white border border-slate-200 text-slate-700 font-bold hover:bg-slate-100 active:scale-95 transition">+</button>
+          </div>
+          <span class="text-xs text-slate-500 font-medium shrink-0">명</span>
+        </div>
+
+        <!-- 트리 형태 선택 -->
+        <div class="grid grid-cols-3 gap-1.5">
+          <button type="button" data-layout-mode="classic"
+            class="layout-mode-btn py-2 px-2 rounded-xl text-xs font-bold border transition text-center bg-rose-600 text-white border-rose-600">
+            삼각형 트리
+          </button>
+          <button type="button" data-layout-mode="trunk"
+            class="layout-mode-btn py-2 px-2 rounded-xl text-xs font-bold border transition text-center bg-white text-slate-600 border-slate-200 hover:bg-slate-50">
+            기둥 포함형
+          </button>
+          <button type="button" data-layout-mode="gifts"
+            class="layout-mode-btn py-2 px-2 rounded-xl text-xs font-bold border transition text-center bg-white text-slate-600 border-slate-200 hover:bg-slate-50">
+            기둥+선물형
+          </button>
+        </div>
+
+        <!-- 직접 행 배열 편집 -->
+        <div class="pt-1">
+          <div class="flex items-center justify-between mb-1">
+            <label for="customRowsInput" class="text-[11px] font-semibold text-slate-500">
+              층별 인원 직접 조정 (쉼표로 구분)
+            </label>
+            <button id="btnApplyCustomRows" type="button"
+              class="text-[11px] font-bold text-rose-600 hover:text-rose-700">적용</button>
+          </div>
+          <input id="customRowsInput" type="text" value="1, 2, 3, 4, 5, 7"
+            placeholder="예: 1, 2, 3, 4, 5, 7"
+            class="w-full px-3 py-2 text-xs font-medium bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-rose-500/30 focus:border-rose-500" />
+        </div>
+      </section>
+
+      <!-- 2. 사진 업로드 & 배경 제거 -->
+      <section class="bg-white rounded-2xl border border-slate-200 shadow-sm p-4 space-y-3.5">
+        <div class="flex items-center justify-between">
+          <h2 class="text-sm font-bold text-slate-800 flex items-center gap-1.5">
+            <span class="w-5 h-5 rounded-full bg-rose-100 text-rose-700 text-xs flex items-center justify-center font-extrabold">2</span>
+            사진 업로드 &amp; 박스 크롭
+          </h2>
+          <span id="uploadProgressText" class="text-xs font-bold text-slate-500">0 / 22장</span>
+        </div>
+
+        <!-- 일괄 업로드 드롭존 -->
+        <label for="batchFileInput" id="dropZone"
+          class="block border-2 border-dashed border-rose-200 hover:border-rose-400 bg-rose-50/50 hover:bg-rose-50 rounded-2xl p-4 text-center cursor-pointer transition">
+          <input id="batchFileInput" type="file" accept="image/*" multiple class="hidden" />
+          <div class="text-2xl mb-1">📸</div>
+          <p class="text-xs sm:text-sm font-bold text-rose-700">사진 여러 장 한꺼번에 올리기</p>
+          <p class="text-[11px] text-slate-500 mt-0.5">클릭하거나 파일을 끌어다 놓으면 빈 칸부터 차례로 채워집니다</p>
+        </label>
+
+        <!-- 일괄 처리 버튼 -->
+        <div class="grid grid-cols-2 gap-2">
+          <button id="btnBatchAiBg" type="button"
+            class="py-2.5 px-2.5 rounded-xl text-xs font-bold bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-700 hover:to-violet-700 text-white shadow-sm transition flex items-center justify-center gap-1 disabled:opacity-50">
+            <span>📦</span>
+            <span>AI 박스 크롭+발 누끼</span>
+          </button>
+          <button id="btnBatchFastBg" type="button"
+            class="py-2.5 px-2.5 rounded-xl text-xs font-bold bg-slate-800 hover:bg-slate-900 text-white shadow-sm transition flex items-center justify-center gap-1 disabled:opacity-50">
+            <span>✂️</span>
+            <span>AI 박스 크롭만</span>
+          </button>
+        </div>
+
+        <div class="flex items-center justify-between gap-2 text-[11px] text-slate-500 bg-slate-50 rounded-xl px-3 py-2 border border-slate-100">
+          <span>💡 각 사진을 클릭하면 <b>수동 박스 크롭·지우개·크기 보정</b>이 열립니다.</span>
+          <button id="btnClearAllPhotos" type="button" class="text-rose-600 font-bold shrink-0 hover:underline">전체 비우기</button>
+        </div>
+
+        <!-- 슬롯 썸네일 그리드 -->
+        <div id="slotGrid" class="grid grid-cols-5 sm:grid-cols-6 lg:grid-cols-5 gap-1.5 max-h-56 overflow-y-auto pr-1">
+          <!-- JS로 렌더링 -->
+        </div>
+      </section>
+
+      <!-- 3. 배경 & 장식 꾸미기 -->
+      <section class="bg-white rounded-2xl border border-slate-200 shadow-sm p-4 space-y-3.5">
+        <h2 class="text-sm font-bold text-slate-800 flex items-center gap-1.5">
+          <span class="w-5 h-5 rounded-full bg-rose-100 text-rose-700 text-xs flex items-center justify-center font-extrabold">3</span>
+          배경 &amp; 크리스마스 장식
+        </h2>
+
+        <!-- 배경 테마 프리셋 -->
+        <div>
+          <label class="text-[11px] font-semibold text-slate-500 block mb-1.5">배경 색상 테마</label>
+          <div class="flex items-center gap-2 flex-wrap">
+            <button type="button" data-bg="#9B232B" title="클래식 버건디" class="bg-preset-btn w-8 h-8 rounded-full border-2 border-slate-900 shadow-sm" style="background:#9B232B;"></button>
+            <button type="button" data-bg="#D6131E" title="산타 레드" class="bg-preset-btn w-8 h-8 rounded-full border-2 border-white shadow-sm ring-1 ring-slate-200" style="background:#D6131E;"></button>
+            <button type="button" data-bg="#14452F" title="포레스트 그린" class="bg-preset-btn w-8 h-8 rounded-full border-2 border-white shadow-sm ring-1 ring-slate-200" style="background:#14452F;"></button>
+            <button type="button" data-bg="#172554" title="미드나잇 네이비" class="bg-preset-btn w-8 h-8 rounded-full border-2 border-white shadow-sm ring-1 ring-slate-200" style="background:#172554;"></button>
+            <button type="button" data-bg="#27272A" title="모던 차콜" class="bg-preset-btn w-8 h-8 rounded-full border-2 border-white shadow-sm ring-1 ring-slate-200" style="background:#27272A;"></button>
+            <button type="button" data-bg="#FDF6EC" title="웜 크림" class="bg-preset-btn w-8 h-8 rounded-full border-2 border-white shadow-sm ring-1 ring-slate-200" style="background:#FDF6EC;"></button>
+            <label class="w-8 h-8 rounded-full border border-slate-300 flex items-center justify-center cursor-pointer bg-white text-xs font-bold text-slate-600 hover:bg-slate-50" title="직접 색상 선택">
+              <span>+</span>
+              <input id="customBgColor" type="color" value="#9B232B" class="sr-only" />
+            </label>
+          </div>
+        </div>
+
+        <!-- 장식 요소 토글 -->
+        <div class="grid grid-cols-2 gap-2 text-xs font-semibold text-slate-700">
+          <label class="flex items-center gap-2 bg-slate-50 px-3 py-2 rounded-xl border border-slate-200 cursor-pointer">
+            <input id="chkStar" type="checkbox" checked class="rounded text-rose-600 focus:ring-rose-500" />
+            <span>⭐ 상단 왕별</span>
+          </label>
+          <label class="flex items-center gap-2 bg-slate-50 px-3 py-2 rounded-xl border border-slate-200 cursor-pointer">
+            <input id="chkTrunk" type="checkbox" checked class="rounded text-rose-600 focus:ring-rose-500" />
+            <span>🪵 나무 기둥</span>
+          </label>
+          <label class="flex items-center gap-2 bg-slate-50 px-3 py-2 rounded-xl border border-slate-200 cursor-pointer">
+            <input id="chkGifts" type="checkbox" checked class="rounded text-rose-600 focus:ring-rose-500" />
+            <span>🎁 하단 선물상자</span>
+          </label>
+          <label class="flex items-center gap-2 bg-slate-50 px-3 py-2 rounded-xl border border-slate-200 cursor-pointer">
+            <input id="chkBoxShadow" type="checkbox" checked class="rounded text-rose-600 focus:ring-rose-500" />
+            <span>✨ 박스 입체 그림자</span>
+          </label>
+        </div>
+
+        <!-- 배경 패턴 선택 -->
+        <div>
+          <label class="text-[11px] font-semibold text-slate-500 block mb-1.5">배경 파티 장식</label>
+          <div class="grid grid-cols-3 gap-1.5">
+            <button type="button" data-deco="confetti" class="deco-btn py-1.5 rounded-xl text-xs font-bold border bg-rose-600 text-white border-rose-600">컨페티 &amp; 반짝이</button>
+            <button type="button" data-deco="snow" class="deco-btn py-1.5 rounded-xl text-xs font-bold border bg-white text-slate-600 border-slate-200 hover:bg-slate-50">눈송이 &amp; 별빛</button>
+            <button type="button" data-deco="none" class="deco-btn py-1.5 rounded-xl text-xs font-bold border bg-white text-slate-600 border-slate-200 hover:bg-slate-50">깔끔하게 없음</button>
+          </div>
+        </div>
+
+        <!-- 문구 입력 -->
+        <div class="grid grid-cols-2 gap-2">
+          <div>
+            <label for="titleTextInput" class="text-[11px] font-semibold text-slate-500 block mb-1">좌측 상단 문구</label>
+            <input id="titleTextInput" type="text" value="" placeholder="예: MERRY CHRISTMAS"
+              class="w-full px-2.5 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:border-rose-500" />
+          </div>
+          <div>
+            <label for="badgeTextInput" class="text-[11px] font-semibold text-slate-500 block mb-1">우측 상단 소속/학급</label>
+            <input id="badgeTextInput" type="text" value="" placeholder="예: 3학년 2반"
+              class="w-full px-2.5 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:border-rose-500" />
+          </div>
+        </div>
+
+        <!-- 박스 간격/겹침/비율 미세 조정 -->
+        <div class="space-y-2 pt-1 border-t border-slate-100">
+          <div>
+            <div class="flex justify-between text-[11px] font-semibold text-slate-600 mb-0.5">
+              <span>박스 가로 밀착도 (겹침)</span>
+              <span id="overlapXVal">8%</span>
+            </div>
+            <input id="rangeOverlapX" type="range" min="-15" max="28" value="8" class="w-full" />
+          </div>
+          <div>
+            <div class="flex justify-between text-[11px] font-semibold text-slate-600 mb-0.5">
+              <span>박스 세로 밀착도 (겹침)</span>
+              <span id="overlapYVal">10%</span>
+            </div>
+            <input id="rangeOverlapY" type="range" min="-15" max="28" value="10" class="w-full" />
+          </div>
+          <div>
+            <div class="flex justify-between text-[11px] font-semibold text-slate-600 mb-0.5">
+              <span>박스 가로세로 비율</span>
+              <span id="boxRatioVal">100% (1:1)</span>
+            </div>
+            <input id="rangeBoxRatio" type="range" min="70" max="140" value="100" class="w-full" />
+          </div>
+        </div>
+      </section>
+
+      <!-- 4. 고해상도 저장 설정 -->
+      <section class="bg-white rounded-2xl border border-slate-200 shadow-sm p-4 space-y-3">
+        <h2 class="text-sm font-bold text-slate-800 flex items-center gap-1.5">
+          <span class="w-5 h-5 rounded-full bg-rose-100 text-rose-700 text-xs flex items-center justify-center font-extrabold">4</span>
+          고해상도 이미지 저장
+        </h2>
+
+        <div class="grid grid-cols-2 gap-2">
+          <div>
+            <label for="aspectSelect" class="text-[11px] font-semibold text-slate-500 block mb-1">이미지 비율</label>
+            <select id="aspectSelect" class="w-full px-2.5 py-2 text-xs font-semibold bg-slate-50 border border-slate-200 rounded-xl focus:outline-none">
+              <option value="3:4" selected>3:4 포스터 (추천)</option>
+              <option value="9:16">9:16 모바일 / 스토리</option>
+              <option value="4:5">4:5 인스타그램</option>
+              <option value="1:1">1:1 정사각형</option>
+            </select>
+          </div>
+          <div>
+            <label for="resolutionSelect" class="text-[11px] font-semibold text-slate-500 block mb-1">출력 해상도</label>
+            <select id="resolutionSelect" class="w-full px-2.5 py-2 text-xs font-semibold bg-slate-50 border border-slate-200 rounded-xl focus:outline-none">
+              <option value="1800">고화질 (1800px)</option>
+              <option value="2400" selected>초고화질 4K (2400px)</option>
+              <option value="3200">인쇄용 초고해상도 (3200px)</option>
+            </select>
+          </div>
+        </div>
+
+        <button id="btnDownloadMain" type="button"
+          class="w-full py-3 rounded-xl text-sm font-extrabold bg-gradient-to-r from-rose-600 to-red-700 hover:from-rose-700 hover:to-red-800 text-white shadow-md hover:shadow-lg transition flex items-center justify-center gap-2">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M7 10l5 5m0 0l5-5m-5 5V3" />
+          </svg>
+          <span>완성된 박스트리 PNG 다운로드</span>
+        </button>
+      </section>
+    </aside>
+
+    <!-- 오른쪽 실시간 미리보기 캔버스 영역 -->
+    <section class="lg:col-span-8 xl:col-span-8 order-1 lg:order-2 flex flex-col items-center">
+      <div class="w-full bg-white rounded-2xl border border-slate-200 shadow-sm p-3 sm:p-4 flex flex-col items-center">
+        <!-- 미리보기 상단 바 -->
+        <div class="w-full flex flex-wrap items-center justify-between gap-2 mb-3 pb-2.5 border-b border-slate-100">
+          <div class="flex items-center gap-2">
+            <span class="text-xs font-bold text-slate-700">실시간 트리 미리보기</span>
+            <span id="frontModeBanner" class="hidden text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-indigo-100 text-indigo-800 border border-indigo-200">
+              ⬆️ 레이어 순서 모드: 앞으로 가져올 사진을 클릭하세요
+            </span>
+            <span id="swapModeBanner" class="hidden text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-amber-100 text-amber-800 border border-amber-200">
+              ⇄ 자리 바꾸기 모드: 두 박스를 차례로 클릭하세요
+            </span>
+          </div>
+          <div class="flex items-center gap-3 text-xs">
+            <label class="flex items-center gap-1.5 text-slate-600 font-medium cursor-pointer">
+              <input id="chkShowGuides" type="checkbox" checked class="rounded text-rose-600" />
+              <span>슬롯 번호 표시</span>
+            </label>
+          </div>
+        </div>
+
+        <!-- 캔버스 래퍼 -->
+        <div id="canvasContainer" class="w-full flex items-center justify-center bg-slate-100/80 rounded-xl p-2 sm:p-4 overflow-hidden relative">
+          <canvas id="previewCanvas" class="max-w-full max-h-[76vh] w-auto h-auto rounded-xl shadow-xl cursor-pointer transition-transform"></canvas>
+
+          <!-- 일괄 처리 오버레이 -->
+          <div id="batchLoadingOverlay" class="hidden absolute inset-0 bg-slate-900/60 backdrop-blur-sm rounded-xl flex flex-col items-center justify-center text-white p-6 text-center z-20">
+            <div class="w-11 h-11 border-4 border-white/30 border-t-white rounded-full spinner mb-3"></div>
+            <p id="batchLoadingTitle" class="text-sm sm:text-base font-bold">AI가 상자 영역을 인식해 크롭하고 있습니다...</p>
+            <p id="batchLoadingSub" class="text-xs text-slate-200 mt-1">1 / 10 처리 중</p>
+          </div>
+        </div>
+
+        <p class="text-[11px] text-slate-400 mt-2.5 text-center">
+          빈 박스를 클릭하면 사진을 바로 올릴 수 있고, 사진이 들어있는 박스를 클릭하면 박스 크롭 및 보정 창이 열립니다.
+        </p>
+      </div>
+    </section>
+  </main>
+
+  <!-- 단일 슬롯 업로드용 숨김 input -->
+  <input id="singleFileInput" type="file" accept="image/*" class="hidden" />
+
+  <!-- 사진 편집 & 박스 크롭 모달 -->
+  <div id="editorModal" class="hidden fixed inset-0 z-50 bg-slate-900/70 backdrop-blur-sm flex items-center justify-center p-3 sm:p-5">
+    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-4xl max-h-[92vh] flex flex-col overflow-hidden">
+      <!-- 모달 헤더 -->
+      <div class="px-4 sm:px-5 py-3.5 border-b border-slate-200 flex items-center justify-between">
+        <div class="flex items-center gap-2">
+          <span id="editorSlotBadge" class="px-2.5 py-0.5 rounded-full bg-rose-100 text-rose-700 text-xs font-extrabold">#1번 박스</span>
+          <h3 class="text-sm sm:text-base font-bold text-slate-900">박스 크롭 &amp; 배경 보정</h3>
+        </div>
+        <button id="btnCloseEditor" type="button" class="w-8 h-8 rounded-lg hover:bg-slate-100 text-slate-500 font-bold text-lg flex items-center justify-center">✕</button>
+      </div>
+
+      <!-- 모달 바디 -->
+      <div class="flex-1 overflow-y-auto p-4 sm:p-5 grid grid-cols-1 md:grid-cols-12 gap-4">
+        <!-- 편집 캔버스 -->
+        <div class="md:col-span-7 flex flex-col items-center justify-center">
+          <div class="w-full aspect-square max-w-[440px] checkerboard rounded-2xl border border-slate-200 overflow-hidden relative flex items-center justify-center shadow-inner p-1">
+            <canvas id="editorCanvas" class="max-w-full max-h-full w-auto h-auto touch-none cursor-crosshair block"></canvas>
+            <!-- AI 처리 중 로더 -->
+            <div id="editorAiLoader" class="hidden absolute inset-0 bg-slate-900/60 flex flex-col items-center justify-center text-white text-center p-4">
+              <div class="w-9 h-9 border-4 border-white/30 border-t-white rounded-full spinner mb-2.5"></div>
+              <p class="text-xs sm:text-sm font-bold">AI가 상자 영역을 인식해 크롭하고 있습니다...</p>
+              <p class="text-[11px] text-slate-200 mt-1">박스 내부는 100% 보호되고 주변 배경만 정리됩니다</p>
+            </div>
+          </div>
+          <p id="editorToolHint" class="text-[11px] text-slate-500 mt-2 text-center">
+            현재 도구: <b>박스 크롭</b> — 모서리를 드래그해 상자에 맞춘 뒤 [자르기]를 누르세요.
+          </p>
+        </div>
+
+        <!-- 편집 컨트롤 -->
+        <div class="md:col-span-5 space-y-3.5 flex flex-col justify-between">
+          <div class="space-y-3.5">
+            <!-- 원클릭 자동 박스 크롭 -->
+            <div class="space-y-2">
+              <p class="text-xs font-bold text-slate-700">1. AI 자동 박스 크롭 &amp; 누끼</p>
+              <button id="btnEditorAiRemove" type="button"
+                class="w-full py-2.5 px-3 rounded-xl text-xs font-bold bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-700 hover:to-violet-700 text-white shadow-sm transition flex items-center justify-center gap-1.5">
+                <span>📦</span>
+                <span>AI 박스 크롭 + 튀어나온 발/손 누끼</span>
+              </button>
+              <button id="btnEditorAutoCorner" type="button"
+                class="w-full py-2 px-3 rounded-xl text-xs font-bold bg-slate-800 hover:bg-slate-900 text-white transition flex items-center justify-center gap-1.5">
+                <span>✂️</span>
+                <span>AI 상자 형태로만 깔끔하게 크롭</span>
+              </button>
+            </div>
+
+            <!-- 수동 보정 도구 -->
+            <div class="space-y-2 pt-2 border-t border-slate-100">
+              <div class="flex items-center justify-between">
+                <p class="text-xs font-bold text-slate-700">2. 박스 크롭 &amp; 수동 보정</p>
+                <div class="flex gap-1.5">
+                  <button id="btnEditorUndo" type="button" class="text-[11px] font-bold px-2 py-0.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700">되돌리기</button>
+                  <button id="btnEditorResetBg" type="button" class="text-[11px] font-bold px-2 py-0.5 rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-600">원본 복구</button>
+                </div>
+              </div>
+
+              <div class="grid grid-cols-2 sm:grid-cols-4 gap-1.5">
+                <button type="button" data-tool="crop" class="editor-tool-btn py-2 rounded-xl text-xs font-bold border bg-rose-600 text-white border-rose-600">✂️ 박스 크롭</button>
+                <button type="button" data-tool="wand" class="editor-tool-btn py-2 rounded-xl text-xs font-bold border bg-white text-slate-700 border-slate-200 hover:bg-slate-50">🪄 매직완드</button>
+                <button type="button" data-tool="erase" class="editor-tool-btn py-2 rounded-xl text-xs font-bold border bg-white text-slate-700 border-slate-200 hover:bg-slate-50">🧽 지우개</button>
+                <button type="button" data-tool="restore" class="editor-tool-btn py-2 rounded-xl text-xs font-bold border bg-white text-slate-700 border-slate-200 hover:bg-slate-50">🖌️ 복구</button>
+              </div>
+
+              <!-- 크롭 적용 바 -->
+              <div id="cropActionBar" class="flex items-center gap-2 bg-rose-50 border border-rose-200 rounded-xl p-2">
+                <button id="btnApplyCrop" type="button" class="flex-1 py-1.5 px-3 rounded-lg bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold transition shadow-sm">
+                  ✂️ 반짝이 테두리대로 자르기
+                </button>
+                <button id="btnResetCropRect" type="button" class="py-1.5 px-2.5 rounded-lg bg-white border border-rose-200 text-rose-700 text-[11px] font-bold hover:bg-rose-100 transition">
+                  초기화
+                </button>
+              </div>
+
+              <div class="grid grid-cols-2 gap-2.5 pt-1">
+                <div>
+                  <div class="flex justify-between text-[11px] text-slate-600 font-medium">
+                    <span>완드 허용치</span>
+                    <span id="wandTolVal">38</span>
+                  </div>
+                  <input id="rangeWandTol" type="range" min="5" max="100" value="38" class="w-full" />
+                </div>
+                <div>
+                  <div class="flex justify-between text-[11px] text-slate-600 font-medium">
+                    <span>브러시 크기</span>
+                    <span id="brushSizeVal">26px</span>
+                  </div>
+                  <input id="rangeBrushSize" type="range" min="6" max="80" value="26" class="w-full" />
+                </div>
+              </div>
+            </div>
+
+            <!-- 위치/크기/회전 미세 조정 -->
+            <div class="space-y-2 pt-2 border-t border-slate-100">
+              <div class="flex items-center justify-between">
+                <p class="text-xs font-bold text-slate-700">3. 트리 내 크기 &amp; 각도 보정</p>
+                <button id="btnResetTransform" type="button" class="text-[11px] font-semibold text-slate-500 hover:text-slate-700">초기화</button>
+              </div>
+              <div class="space-y-1.5">
+                <div>
+                  <div class="flex justify-between text-[11px] text-slate-600"><span>확대/축소</span><span id="tScaleVal">100%</span></div>
+                  <input id="rangeTScale" type="range" min="60" max="160" value="100" class="w-full" />
+                </div>
+                <div class="grid grid-cols-2 gap-2">
+                  <div>
+                    <div class="flex justify-between text-[11px] text-slate-600"><span>가로 위치</span><span id="tOffsetXVal">0</span></div>
+                    <input id="rangeTOffsetX" type="range" min="-40" max="40" value="0" class="w-full" />
+                  </div>
+                  <div>
+                    <div class="flex justify-between text-[11px] text-slate-600"><span>세로 위치</span><span id="tOffsetYVal">0</span></div>
+                    <input id="rangeTOffsetY" type="range" min="-40" max="40" value="0" class="w-full" />
+                  </div>
+                </div>
+                <div>
+                  <div class="flex justify-between text-[11px] text-slate-600"><span>회전 각도</span><span id="tRotateVal">0°</span></div>
+                  <input id="rangeTRotate" type="range" min="-25" max="25" value="0" class="w-full" />
+                </div>
+                <div class="grid grid-cols-2 gap-1.5 pt-1">
+                  <button id="btnEditorBringFront" type="button" class="py-1.5 rounded-xl text-[11px] font-bold border border-indigo-200 bg-indigo-50 text-indigo-700 hover:bg-indigo-100 transition">⬆️ 맨 앞으로</button>
+                  <button id="btnEditorSendBack" type="button" class="py-1.5 rounded-xl text-[11px] font-bold border border-slate-200 bg-slate-50 text-slate-700 hover:bg-slate-100 transition">⬇️ 맨 뒤로</button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 하단 액션 버튼 -->
+          <div class="flex items-center gap-2 pt-3 border-t border-slate-200">
+            <button id="btnReplacePhoto" type="button" class="px-3 py-2.5 rounded-xl text-xs font-bold border border-slate-200 text-slate-700 hover:bg-slate-50">사진 교체</button>
+            <button id="btnDeletePhoto" type="button" class="px-3 py-2.5 rounded-xl text-xs font-bold border border-rose-200 text-rose-600 hover:bg-rose-50">삭제</button>
+            <button id="btnSaveEditor" type="button" class="flex-1 py-2.5 rounded-xl text-xs sm:text-sm font-extrabold bg-rose-600 hover:bg-rose-700 text-white shadow-sm">적용 완료</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 토스트 알림 컨테이너 -->
+  <div id="toastContainer" class="fixed bottom-5 left-1/2 -translate-x-1/2 z-50 flex flex-col gap-2 pointer-events-none"></div>
+
+  <script>
+    // ======================== 1. 전역 상태 & DOM 참조 ========================
+    const apiKey = ""; // Canvas 런타임에서 자동 주입
+
+    const state = {
+      peopleCount: 22,
+      layoutMode: 'classic', // 'classic' | 'trunk' | 'gifts'
+      rows: [1, 2, 3, 4, 5, 7],
+      trunkCount: 0,
+      giftCount: 0,
+      slots: [],
+      bgColor: '#9B232B',
+      showStar: true,
+      showTrunk: true,
+      showGifts: true,
+      showBoxShadow: true,
+      decoStyle: 'confetti', // 'confetti' | 'snow' | 'none'
+      titleText: '',
+      badgeText: '',
+      overlapX: 8,
+      overlapY: 10,
+      boxRatio: 100, // 70 ~ 140 (%)
+      aspectRatio: '3:4',
+      exportWidth: 2400,
+      showGuides: true,
+      frontMode: false,
+      swapMode: false,
+      swapFirstIndex: null,
+      activeUploadSlotIndex: null,
+      renderedSlotRects: [],
+      maxZIndex: 1,
+      minZIndex: -1,
+    };
+
+    const editorState = {
+      slotIndex: null,
+      tool: 'crop', // 'crop' | 'wand' | 'erase' | 'restore'
+      wandTol: 38,
+      brushSize: 26,
+      scale: 100,
+      offsetX: 0,
+      offsetY: 0,
+      rotate: 0,
+      origCanvas: null,
+      workCanvas: null,
+      undoStack: [],
+      isDrawing: false,
+      cropQuad: null, // { tl:{x,y}, tr:{x,y}, br:{x,y}, bl:{x,y} }
+      cropDragMode: null,
+      cropDragStart: null,
+    };
+
+    const els = {
+      btnFrontMode: document.getElementById('btnFrontMode'),
+      btnSwapMode: document.getElementById('btnSwapMode'),
+      btnDownloadTop: document.getElementById('btnDownloadTop'),
+      layoutSummaryBadge: document.getElementById('layoutSummaryBadge'),
+      peopleCountInput: document.getElementById('peopleCountInput'),
+      btnDecreaseCount: document.getElementById('btnDecreaseCount'),
+      btnIncreaseCount: document.getElementById('btnIncreaseCount'),
+      customRowsInput: document.getElementById('customRowsInput'),
+      btnApplyCustomRows: document.getElementById('btnApplyCustomRows'),
+      uploadProgressText: document.getElementById('uploadProgressText'),
+      dropZone: document.getElementById('dropZone'),
+      batchFileInput: document.getElementById('batchFileInput'),
+      btnBatchAiBg: document.getElementById('btnBatchAiBg'),
+      btnBatchFastBg: document.getElementById('btnBatchFastBg'),
+      btnClearAllPhotos: document.getElementById('btnClearAllPhotos'),
+      slotGrid: document.getElementById('slotGrid'),
+      customBgColor: document.getElementById('customBgColor'),
+      chkStar: document.getElementById('chkStar'),
+      chkTrunk: document.getElementById('chkTrunk'),
+      chkGifts: document.getElementById('chkGifts'),
+      chkBoxShadow: document.getElementById('chkBoxShadow'),
+      titleTextInput: document.getElementById('titleTextInput'),
+      badgeTextInput: document.getElementById('badgeTextInput'),
+      overlapXVal: document.getElementById('overlapXVal'),
+      rangeOverlapX: document.getElementById('rangeOverlapX'),
+      overlapYVal: document.getElementById('overlapYVal'),
+      rangeOverlapY: document.getElementById('rangeOverlapY'),
+      boxRatioVal: document.getElementById('boxRatioVal'),
+      rangeBoxRatio: document.getElementById('rangeBoxRatio'),
+      aspectSelect: document.getElementById('aspectSelect'),
+      resolutionSelect: document.getElementById('resolutionSelect'),
+      btnDownloadMain: document.getElementById('btnDownloadMain'),
+      frontModeBanner: document.getElementById('frontModeBanner'),
+      swapModeBanner: document.getElementById('swapModeBanner'),
+      chkShowGuides: document.getElementById('chkShowGuides'),
+      canvasContainer: document.getElementById('canvasContainer'),
+      previewCanvas: document.getElementById('previewCanvas'),
+      batchLoadingOverlay: document.getElementById('batchLoadingOverlay'),
+      batchLoadingTitle: document.getElementById('batchLoadingTitle'),
+      batchLoadingSub: document.getElementById('batchLoadingSub'),
+      singleFileInput: document.getElementById('singleFileInput'),
+      editorModal: document.getElementById('editorModal'),
+      editorSlotBadge: document.getElementById('editorSlotBadge'),
+      btnCloseEditor: document.getElementById('btnCloseEditor'),
+      editorCanvas: document.getElementById('editorCanvas'),
+      editorAiLoader: document.getElementById('editorAiLoader'),
+      editorToolHint: document.getElementById('editorToolHint'),
+      btnEditorAiRemove: document.getElementById('btnEditorAiRemove'),
+      btnEditorAutoCorner: document.getElementById('btnEditorAutoCorner'),
+      btnEditorUndo: document.getElementById('btnEditorUndo'),
+      btnEditorResetBg: document.getElementById('btnEditorResetBg'),
+      cropActionBar: document.getElementById('cropActionBar'),
+      btnApplyCrop: document.getElementById('btnApplyCrop'),
+      btnResetCropRect: document.getElementById('btnResetCropRect'),
+      wandTolVal: document.getElementById('wandTolVal'),
+      rangeWandTol: document.getElementById('rangeWandTol'),
+      brushSizeVal: document.getElementById('brushSizeVal'),
+      rangeBrushSize: document.getElementById('rangeBrushSize'),
+      btnResetTransform: document.getElementById('btnResetTransform'),
+      tScaleVal: document.getElementById('tScaleVal'),
+      rangeTScale: document.getElementById('rangeTScale'),
+      tOffsetXVal: document.getElementById('tOffsetXVal'),
+      rangeTOffsetX: document.getElementById('rangeTOffsetX'),
+      tOffsetYVal: document.getElementById('tOffsetYVal'),
+      rangeTOffsetY: document.getElementById('rangeTOffsetY'),
+      tRotateVal: document.getElementById('tRotateVal'),
+      rangeTRotate: document.getElementById('rangeTRotate'),
+      btnEditorBringFront: document.getElementById('btnEditorBringFront'),
+      btnEditorSendBack: document.getElementById('btnEditorSendBack'),
+      btnReplacePhoto: document.getElementById('btnReplacePhoto'),
+      btnDeletePhoto: document.getElementById('btnDeletePhoto'),
+      btnSaveEditor: document.getElementById('btnSaveEditor'),
+      toastContainer: document.getElementById('toastContainer'),
+    };
+
+    // ======================== 2. 유틸리티 & 토스트 ========================
+    function showToast(message, type = 'info') {
+      const toast = document.createElement('div');
+      const colors = {
+        success: 'bg-emerald-600 text-white',
+        error: 'bg-rose-600 text-white',
+        info: 'bg-slate-900 text-white',
+      };
+      toast.className = `px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold shadow-lg transition-all duration-300 opacity-0 translate-y-2 ${colors[type] || colors.info}`;
+      toast.textContent = message;
+      els.toastContainer.appendChild(toast);
+      requestAnimationFrame(() => {
+        toast.classList.remove('opacity-0', 'translate-y-2');
+      });
+      setTimeout(() => {
+        toast.classList.add('opacity-0', 'translate-y-2');
+        setTimeout(() => toast.remove(), 300);
+      }, 2800);
+    }
+
+    function cloneCanvas(src) {
+      const c = document.createElement('canvas');
+      c.width = src.width;
+      c.height = src.height;
+      c.getContext('2d').drawImage(src, 0, 0);
+      return c;
+    }
+
+    function createEmptySlot() {
+      return {
+        origCanvas: null,
+        processedCanvas: null,
+        scale: 100,
+        offsetX: 0,
+        offsetY: 0,
+        rotate: 0,
+        zIndex: 0,
+      };
+    }
+
+    // ======================== 3. 인원 수 -> 최적 트리 자동 배치 알고리즘 ========================
+    function computeBestTriangleRows(n) {
+      if (n <= 0) return [1];
+      if (n === 1) return [1];
+      if (n === 2) return [1, 1];
+      if (n === 3) return [1, 2];
+
+      // 1+2+...+k <= n 인 최대 k 찾기
+      let k = 1;
+      while ((k + 1) * (k + 2) / 2 <= n) {
+        k++;
+      }
+      const rows = [];
+      for (let i = 1; i <= k; i++) rows.push(i);
+      let rem = n - (k * (k + 1)) / 2;
+
+      if (rem === 0) return rows;
+
+      // 남은 인원을 아래층부터 균형 있게 분배 (예: 18명 -> 1, 2, 3, 5, 7 / 22명 -> 1, 2, 3, 4, 5, 7)
+      let step = 0;
+      while (rem > 0) {
+        if (step % 2 === 0) {
+          // 짝수 스텝: 맨 아래층 확장 (단, 바로 윗층과 3 이상 벌어지면 윗층 보완)
+          if (k >= 2 && rows[k - 1] - rows[k - 2] >= 3) {
+            rows[k - 2]++;
+          } else {
+            rows[k - 1]++;
+          }
+        } else {
+          // 홀수 스텝: 꼭대기(1층)를 제외하고 아래층부터 엄격 증가 조건을 유지하며 확장
+          let placed = false;
+          for (let i = k - 2; i >= 1; i--) {
+            if (rows[i] + 1 < rows[i + 1]) {
+              rows[i]++;
+              placed = true;
+              break;
+            }
+          }
+          if (!placed) {
+            rows[k - 1]++;
+          }
+        }
+        rem--;
+        step++;
+      }
+
+      return rows;
+    }
+
+    function applyPeopleCountAndLayout(count, mode) {
+      const clamped = Math.max(1, Math.min(50, parseInt(count, 10) || 1));
+      state.peopleCount = clamped;
+      state.layoutMode = mode;
+      els.peopleCountInput.value = clamped;
+
+      let treeCount = clamped;
+      let trunkCount = 0;
+      let giftCount = 0;
+
+      if (mode === 'trunk' && clamped >= 4) {
+        trunkCount = 1;
+        treeCount = clamped - 1;
+      } else if (mode === 'gifts' && clamped >= 6) {
+        trunkCount = 1;
+        giftCount = 2;
+        treeCount = clamped - 3;
+      }
+
+      state.rows = computeBestTriangleRows(treeCount);
+      state.trunkCount = trunkCount;
+      state.giftCount = giftCount;
+
+      syncSlotsToTotalCount();
+      updateLayoutUI();
+      renderSlotGrid();
+      renderPreview();
+    }
+
+    function syncSlotsToTotalCount() {
+      const total = getTotalSlotCount();
+      while (state.slots.length < total) {
+        state.slots.push(createEmptySlot());
+      }
+      if (state.slots.length > total) {
+        state.slots = state.slots.slice(0, total);
+      }
+    }
+
+    function getTotalSlotCount() {
+      const treeSum = state.rows.reduce((acc, v) => acc + v, 0);
+      return treeSum + state.trunkCount + state.giftCount;
+    }
+
+    function updateLayoutUI() {
+      const total = getTotalSlotCount();
+      let desc = state.rows.join('-');
+      if (state.trunkCount > 0) desc += ' + 기둥';
+      if (state.giftCount > 0) desc += ' + 선물2';
+      els.layoutSummaryBadge.textContent = `총 ${total}명 (${desc})`;
+      els.customRowsInput.value = state.rows.join(', ');
+
+      document.querySelectorAll('.layout-mode-btn').forEach(btn => {
+        const active = btn.dataset.layoutMode === state.layoutMode;
+        btn.className = `layout-mode-btn py-2 px-2 rounded-xl text-xs font-bold border transition text-center ${
+          active
+            ? 'bg-rose-600 text-white border-rose-600'
+            : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'
+        }`;
+      });
+    }
+
+    // ======================== 4. 사진 로딩 & 슬롯 그리드 ========================
+    function loadFileToCanvas(file) {
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          const img = new Image();
+          img.onload = () => {
+            const maxDim = 1400;
+            const scale = Math.min(1, maxDim / Math.max(img.width, img.height));
+            const canvas = document.createElement('canvas');
+            canvas.width = Math.round(img.width * scale);
+            canvas.height = Math.round(img.height * scale);
+            const ctx = canvas.getContext('2d', { willReadFrequently: true });
+            ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+            resolve(canvas);
+          };
+          img.onerror = () => reject(new Error('이미지를 불러올 수 없습니다.'));
+          img.src = e.target.result;
+        };
+        reader.onerror = () => reject(new Error('파일을 읽을 수 없습니다.'));
+        reader.readAsDataURL(file);
+      });
+    }
+
+    async function handleBatchFiles(files) {
+      const imageFiles = Array.from(files).filter(f => f.type.startsWith('image/'));
+      if (imageFiles.length === 0) return;
+
+      let loadedCount = 0;
+      for (const file of imageFiles) {
+        const emptyIdx = state.slots.findIndex(s => !s.processedCanvas);
+        if (emptyIdx === -1) break;
+        try {
+          const canvas = await loadFileToCanvas(file);
+          state.slots[emptyIdx].origCanvas = cloneCanvas(canvas);
+          state.slots[emptyIdx].processedCanvas = cloneCanvas(canvas);
+          state.slots[emptyIdx].scale = 100;
+          state.slots[emptyIdx].offsetX = 0;
+          state.slots[emptyIdx].offsetY = 0;
+          state.slots[emptyIdx].rotate = 0;
+          loadedCount++;
+        } catch (err) {
+          console.error(err);
+        }
+      }
+
+      if (loadedCount > 0) {
+        showToast(`${loadedCount}장의 사진을 차례대로 배치했습니다.`, 'success');
+      } else {
+        showToast('빈 칸이 없습니다. 인원 수를 늘리거나 기존 사진을 비워주세요.', 'info');
+      }
+      renderSlotGrid();
+      renderPreview();
+    }
+
+    function renderSlotGrid() {
+      const filled = state.slots.filter(s => s.processedCanvas).length;
+      els.uploadProgressText.textContent = `${filled} / ${state.slots.length}장`;
+
+      els.slotGrid.innerHTML = '';
+      state.slots.forEach((slot, idx) => {
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = `relative aspect-square rounded-xl border overflow-hidden flex items-center justify-center transition group ${
+          slot.processedCanvas
+            ? 'border-slate-200 checkerboard hover:border-rose-400'
+            : 'border-dashed border-slate-300 bg-slate-50 hover:border-rose-400 hover:bg-rose-50/40'
+        }`;
+
+        if (slot.processedCanvas) {
+          const img = document.createElement('img');
+          img.src = slot.processedCanvas.toDataURL('image/png');
+          img.className = 'w-full h-full object-contain p-0.5';
+          btn.appendChild(img);
+        } else {
+          const plus = document.createElement('span');
+          plus.className = 'text-xs font-bold text-slate-400 group-hover:text-rose-500';
+          plus.textContent = `+${idx + 1}`;
+          btn.appendChild(plus);
+        }
+
+        const badge = document.createElement('span');
+        badge.className = 'absolute top-0.5 left-0.5 px-1 py-0.2 rounded bg-slate-900/70 text-white text-[9px] font-bold leading-tight';
+        badge.textContent = idx + 1;
+        btn.appendChild(badge);
+
+        btn.addEventListener('click', () => onSlotClicked(idx));
+        els.slotGrid.appendChild(btn);
+      });
+    }
+
+    function onSlotClicked(idx) {
+      if (state.frontMode) {
+        if (!state.slots[idx]?.processedCanvas) {
+          showToast('사진이 들어있는 박스를 클릭해 주세요.', 'info');
+          return;
+        }
+        state.maxZIndex++;
+        state.slots[idx].zIndex = state.maxZIndex;
+        renderPreview();
+        showToast(`#${idx + 1}번 사진을 맨 앞으로 가져왔습니다.`, 'success');
+        return;
+      }
+
+      if (state.swapMode) {
+        if (state.swapFirstIndex === null) {
+          state.swapFirstIndex = idx;
+          showToast(`#${idx + 1}번 선택됨 — 바꿀 다른 박스를 클릭하세요.`, 'info');
+          renderPreview();
+        } else {
+          const a = state.swapFirstIndex;
+          const b = idx;
+          if (a !== b) {
+            const temp = state.slots[a];
+            state.slots[a] = state.slots[b];
+            state.slots[b] = temp;
+            showToast(`#${a + 1}번과 #${b + 1}번의 자리를 바꿨습니다.`, 'success');
+          }
+          state.swapFirstIndex = null;
+          renderSlotGrid();
+          renderPreview();
+        }
+        return;
+      }
+
+      if (state.slots[idx]?.processedCanvas) {
+        openEditorModal(idx);
+      } else {
+        state.activeUploadSlotIndex = idx;
+        els.singleFileInput.value = '';
+        els.singleFileInput.click();
+      }
+    }
+
+    // ======================== 5. Gemini AI 박스 크롭 & 누끼 엔진 ========================
+    async function fetchWithRetry(url, options, maxRetries = 4) {
+      let delay = 1000;
+      for (let i = 0; i < maxRetries; i++) {
+        const resp = await fetch(url, options);
+        if (resp.ok) return resp;
+        if (resp.status === 429 || resp.status >= 500) {
+          if (i < maxRetries - 1) {
+            await new Promise(r => setTimeout(r, delay));
+            delay *= 2;
+            continue;
+          }
+        }
+        const errText = await resp.text().catch(() => '');
+        throw new Error(`HTTP ${resp.status} ${errText.slice(0, 120)}`);
+      }
+      throw new Error('네트워크 요청 시간 초과');
+    }
+
+    /**
+     * Gemini Vision(gemini-3-flash-preview)으로 사진에서 반짝이(모루) 테두리의
+     * 정확한 4개 꼭짓점(사다리꼴)과 튀어나온 신체 포함 영역을 동시에 감지합니다.
+     */
+    async function detectBoxAndSubjectWithGemini(sourceCanvas) {
+      const sendCanvas = document.createElement('canvas');
+      const maxSend = 768;
+      const ratio = Math.min(1, maxSend / Math.max(sourceCanvas.width, sourceCanvas.height));
+      sendCanvas.width = Math.round(sourceCanvas.width * ratio);
+      sendCanvas.height = Math.round(sourceCanvas.height * ratio);
+      sendCanvas.getContext('2d').drawImage(sourceCanvas, 0, 0, sendCanvas.width, sendCanvas.height);
+
+      const base64Data = sendCanvas.toDataURL('image/jpeg', 0.9).split(',')[1];
+
+      const prompt = [
+        "Analyze this photo of a person sitting inside a cardboard box decorated with fluffy white/silver/gold Christmas tinsel garland around its border.",
+        "Return coordinates on a 0..1000 normalized scale:",
+        "1. tinsel_quad: The EXACT 4 outer corners of the shiny tinsel garland border itself: top_left, top_right, bottom_right, bottom_left, each as [y, x].",
+        "   - IMPORTANT: Follow the tilted trapezoid shape of the tinsel tightly (often narrower at the top than the bottom).",
+        "   - STRICTLY EXCLUDE any brown wooden classroom door, door frame, wall, ceiling, bulletin board, or floor outside the shiny tinsel.",
+        "   - Place each corner right ON the outer edge of the fluffy tinsel, NOT on the background behind it.",
+        "2. subject_box: [ymin, xmin, ymax, xmax] covering tinsel_quad PLUS any body parts (feet, legs, hands) protruding outside the tinsel. Still exclude all room walls/doors."
+      ].join(' ');
+
+      const payload = {
+        contents: [{
+          role: "user",
+          parts: [
+            { text: prompt },
+            { inlineData: { mimeType: "image/jpeg", data: base64Data } }
+          ]
+        }],
+        generationConfig: {
+          responseMimeType: "application/json",
+          responseSchema: {
+            type: "OBJECT",
+            properties: {
+              tinsel_quad: {
+                type: "OBJECT",
+                properties: {
+                  top_left: { type: "ARRAY", items: { type: "INTEGER" } },
+                  top_right: { type: "ARRAY", items: { type: "INTEGER" } },
+                  bottom_right: { type: "ARRAY", items: { type: "INTEGER" } },
+                  bottom_left: { type: "ARRAY", items: { type: "INTEGER" } }
+                },
+                required: ["top_left", "top_right", "bottom_right", "bottom_left"]
+              },
+              subject_box: { type: "ARRAY", items: { type: "INTEGER" } }
+            },
+            required: ["tinsel_quad", "subject_box"]
+          }
+        }
+      };
+
+      const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent?key=${apiKey}`;
+      const response = await fetchWithRetry(apiUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+
+      const result = await response.json();
+      let text = result?.candidates?.[0]?.content?.parts?.[0]?.text;
+      if (!text) throw new Error('AI가 상자 반짝이 좌표를 찾지 못했습니다.');
+      text = text.replace(/```json|```/g, '').trim();
+      const parsed = JSON.parse(text);
+
+      const toPt = (arr) => {
+        if (!Array.isArray(arr) || arr.length !== 2) return null;
+        const [ny, nx] = arr.map(Number);
+        if (isNaN(nx) || isNaN(ny)) return null;
+        return {
+          x: Math.max(0, Math.min(sourceCanvas.width, (nx / 1000) * sourceCanvas.width)),
+          y: Math.max(0, Math.min(sourceCanvas.height, (ny / 1000) * sourceCanvas.height)),
+        };
+      };
+
+      const q = parsed.tinsel_quad || {};
+      const tl = toPt(q.top_left);
+      const tr = toPt(q.top_right);
+      const br = toPt(q.bottom_right);
+      const bl = toPt(q.bottom_left);
+
+      if (!tl || !tr || !br || !bl || tr.x <= tl.x + 20 || br.x <= bl.x + 20 || bl.y <= tl.y + 20 || br.y <= tr.y + 20) {
+        throw new Error('상자 반짝이 테두리를 정확히 인식하지 못했습니다.');
+      }
+
+      const quad = { tl, tr, br, bl };
+      const qMinX = Math.floor(Math.min(tl.x, bl.x));
+      const qMaxX = Math.ceil(Math.max(tr.x, br.x));
+      const qMinY = Math.floor(Math.min(tl.y, tr.y));
+      const qMaxY = Math.ceil(Math.max(bl.y, br.y));
+
+      let sx = qMinX, sy = qMinY, sx2 = qMaxX, sy2 = qMaxY;
+      if (Array.isArray(parsed.subject_box) && parsed.subject_box.length === 4) {
+        const [ymin, xmin, ymax, xmax] = parsed.subject_box.map(Number);
+        if (ymax > ymin && xmax > xmin) {
+          // 위쪽은 반짝이 상단보다 위로 올라가지 않게 제한해 교실 문/천장 유입 차단
+          sx = Math.max(0, Math.min(qMinX, Math.floor((xmin / 1000) * sourceCanvas.width)));
+          sy = qMinY;
+          sx2 = Math.min(sourceCanvas.width, Math.max(qMaxX, Math.ceil((xmax / 1000) * sourceCanvas.width)));
+          sy2 = Math.min(sourceCanvas.height, Math.max(qMaxY, Math.ceil((ymax / 1000) * sourceCanvas.height)));
+        }
+      }
+
+      return {
+        quad,
+        quadBounds: { x: qMinX, y: qMinY, w: Math.max(30, qMaxX - qMinX), h: Math.max(30, qMaxY - qMinY) },
+        subject: { x: sx, y: sy, w: Math.max(30, sx2 - sx), h: Math.max(30, sy2 - sy) },
+      };
+    }
+
+    /** 4점 다각형(반짝이 테두리) 바깥을 투명하게 잘라내는 헬퍼 */
+    function clipCanvasByQuad(sourceCanvas, quad) {
+      const minX = Math.max(0, Math.floor(Math.min(quad.tl.x, quad.tr.x, quad.br.x, quad.bl.x)));
+      const minY = Math.max(0, Math.floor(Math.min(quad.tl.y, quad.tr.y, quad.br.y, quad.bl.y)));
+      const maxX = Math.min(sourceCanvas.width, Math.ceil(Math.max(quad.tl.x, quad.tr.x, quad.br.x, quad.bl.x)));
+      const maxY = Math.min(sourceCanvas.height, Math.ceil(Math.max(quad.tl.y, quad.tr.y, quad.br.y, quad.bl.y)));
+      const cw = Math.max(20, maxX - minX);
+      const ch = Math.max(20, maxY - minY);
+
+      const out = document.createElement('canvas');
+      out.width = cw;
+      out.height = ch;
+      const ctx = out.getContext('2d', { willReadFrequently: true });
+      ctx.save();
+      ctx.beginPath();
+      ctx.moveTo(quad.tl.x - minX, quad.tl.y - minY);
+      ctx.lineTo(quad.tr.x - minX, quad.tr.y - minY);
+      ctx.lineTo(quad.br.x - minX, quad.br.y - minY);
+      ctx.lineTo(quad.bl.x - minX, quad.bl.y - minY);
+      ctx.closePath();
+      ctx.clip();
+      ctx.drawImage(sourceCanvas, -minX, -minY);
+      ctx.restore();
+      return out;
+    }
+
+    /** [모드 1] AI 반짝이 테두리(사다리꼴)를 따라 깔끔하게 크롭 */
+    async function cropToBoxOnlyWithAI(sourceCanvas) {
+      const { quad } = await detectBoxAndSubjectWithGemini(sourceCanvas);
+      return clipCanvasByQuad(sourceCanvas, quad);
+    }
+
+    /** [모드 2] AI 반짝이 테두리 크롭 + 박스 밖 튀어나온 발/손만 누끼 */
+    async function removeBackgroundWithGeminiAI(sourceCanvas) {
+      const { quad, quadBounds, subject } = await detectBoxAndSubjectWithGemini(sourceCanvas);
+
+      // 튀어나온 발/손 영역이 거의 없으면 바로 반짝이 사다리꼴 크롭만 반환
+      const extraAreaRatio = 1 - (quadBounds.w * quadBounds.h) / (subject.w * subject.h);
+      if (extraAreaRatio < 0.03) {
+        return clipCanvasByQuad(sourceCanvas, quad);
+      }
+
+      const croppedCanvas = document.createElement('canvas');
+      croppedCanvas.width = subject.w;
+      croppedCanvas.height = subject.h;
+      croppedCanvas.getContext('2d', { willReadFrequently: true }).drawImage(
+        sourceCanvas, subject.x, subject.y, subject.w, subject.h, 0, 0, subject.w, subject.h
+      );
+
+      // 반짝이 4점 다각형 내부 마스크 생성 (이 영역은 100% 보호)
+      const quadMaskCanvas = document.createElement('canvas');
+      quadMaskCanvas.width = subject.w;
+      quadMaskCanvas.height = subject.h;
+      const qmCtx = quadMaskCanvas.getContext('2d', { willReadFrequently: true });
+      qmCtx.fillStyle = '#ffffff';
+      qmCtx.beginPath();
+      qmCtx.moveTo(quad.tl.x - subject.x, quad.tl.y - subject.y);
+      qmCtx.lineTo(quad.tr.x - subject.x, quad.tr.y - subject.y);
+      qmCtx.lineTo(quad.br.x - subject.x, quad.br.y - subject.y);
+      qmCtx.lineTo(quad.bl.x - subject.x, quad.bl.y - subject.y);
+      qmCtx.closePath();
+      qmCtx.fill();
+      const quadMaskData = qmCtx.getImageData(0, 0, subject.w, subject.h).data;
+
+      // 반짝이 상단보다 위쪽 또는 상단 65% 좌우 바깥은 교실 문이므로 무조건 제거할 기준선
+      const lowerProtrudeY = Math.round((Math.min(quad.bl.y, quad.br.y) - subject.y) * 0.65);
+
+      let maskCanvas = null;
+      try {
+        const sendCanvas = document.createElement('canvas');
+        const maxSend = 768;
+        const ratio = Math.min(1, maxSend / Math.max(croppedCanvas.width, croppedCanvas.height));
+        sendCanvas.width = Math.round(croppedCanvas.width * ratio);
+        sendCanvas.height = Math.round(croppedCanvas.height * ratio);
+        sendCanvas.getContext('2d').drawImage(croppedCanvas, 0, 0, sendCanvas.width, sendCanvas.height);
+
+        const base64Data = sendCanvas.toDataURL('image/png').split(',')[1];
+        const prompt = [
+          "Keep the decorated Christmas box (with its shiny tinsel border) and the person's protruding feet/legs/hands completely intact.",
+          "Replace ALL background outside the shiny tinsel border (brown wooden doors, walls, floor) with solid flat bright magenta (#FF00FF).",
+          "Keep exact framing and dimensions."
+        ].join(' ');
+
+        const payload = {
+          contents: [{
+            role: "user",
+            parts: [
+              { text: prompt },
+              { inlineData: { mimeType: "image/png", data: base64Data } }
+            ]
+          }],
+          generationConfig: { responseModalities: ['IMAGE'] }
+        };
+
+        const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-flash-image:generateContent?key=${apiKey}`;
+        const response = await fetchWithRetry(apiUrl, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+        const result = await response.json();
+        const part = result?.candidates?.[0]?.content?.parts?.find(p => p.inlineData);
+
+        if (part && part.inlineData?.data) {
+          const aiImg = await new Promise((resolve, reject) => {
+            const img = new Image();
+            img.onload = () => resolve(img);
+            img.onerror = reject;
+            img.src = `data:${part.inlineData.mimeType || 'image/png'};base64,${part.inlineData.data}`;
+          });
+
+          const temp = document.createElement('canvas');
+          temp.width = croppedCanvas.width;
+          temp.height = croppedCanvas.height;
+          temp.getContext('2d', { willReadFrequently: true }).drawImage(
+            aiImg, 0, 0, croppedCanvas.width, croppedCanvas.height
+          );
+          const removed = keyOutOuterMagenta(temp);
+          if (removed > 0.005 && removed < 0.75) {
+            maskCanvas = temp;
+          }
+        }
+      } catch (err) {
+        console.warn('AI 발 누끼 폴백 사용:', err);
+      }
+
+      if (!maskCanvas) {
+        maskCanvas = cloneCanvas(croppedCanvas);
+        const mw = maskCanvas.width, mh = maskCanvas.height;
+        [[2, 2], [mw - 3, 2], [2, mh - 3], [mw - 3, mh - 3]].forEach(([cx, cy]) => {
+          floodFillErase(maskCanvas, cx, cy, 38);
+        });
+      }
+
+      const finalCanvas = cloneCanvas(croppedCanvas);
+      const fCtx = finalCanvas.getContext('2d', { willReadFrequently: true });
+      const w = finalCanvas.width;
+      const h = finalCanvas.height;
+      const origImg = fCtx.getImageData(0, 0, w, h);
+      const maskData = maskCanvas.getContext('2d', { willReadFrequently: true })
+        .getImageData(0, 0, w, h).data;
+
+      for (let y = 0; y < h; y++) {
+        for (let x = 0; x < w; x++) {
+          const aIdx = (y * w + x) * 4 + 3;
+          // 반짝이 다각형 안쪽은 100% 원본 보호
+          if (quadMaskData[aIdx] > 128) continue;
+          // 반짝이 다각형 바깥이면서 상단 영역(교실 문/벽 위치)은 무조건 투명 처리
+          if (y < lowerProtrudeY) {
+            origImg.data[aIdx] = 0;
+          } else {
+            // 하단 튀어나온 발/다리 영역만 누끼 마스크 적용
+            origImg.data[aIdx] = maskData[aIdx];
+          }
+        }
+      }
+
+      fCtx.putImageData(origImg, 0, 0);
+      removeSmallIslands(finalCanvas);
+      return trimTransparentCanvas(finalCanvas);
+    }
+
+    function keyOutOuterMagenta(canvas) {
+      const ctx = canvas.getContext('2d', { willReadFrequently: true });
+      const w = canvas.width, h = canvas.height;
+      const imgData = ctx.getImageData(0, 0, w, h);
+      const data = imgData.data;
+      const visited = new Uint8Array(w * h);
+      const stack = [];
+
+      const isMagenta = (idx) => {
+        const r = data[idx], g = data[idx + 1], b = data[idx + 2], a = data[idx + 3];
+        if (a < 20) return true;
+        return (r > 135 && b > 125 && g < 130 && (r - g) > 45 && (b - g) > 35);
+      };
+
+      const pushIf = (x, y) => {
+        const pos = y * w + x;
+        if (!visited[pos] && isMagenta(pos * 4)) {
+          visited[pos] = 1;
+          stack.push(x, y);
+        }
+      };
+
+      for (let x = 0; x < w; x++) { pushIf(x, 0); pushIf(x, h - 1); }
+      for (let y = 0; y < h; y++) { pushIf(0, y); pushIf(w - 1, y); }
+
+      let cleared = 0;
+      while (stack.length > 0) {
+        const y = stack.pop();
+        const x = stack.pop();
+        const idx = (y * w + x) * 4;
+        data[idx + 3] = 0;
+        cleared++;
+        if (x > 0) pushIf(x - 1, y);
+        if (x < w - 1) pushIf(x + 1, y);
+        if (y > 0) pushIf(x, y - 1);
+        if (y < h - 1) pushIf(x, y + 1);
+      }
+
+      ctx.putImageData(imgData, 0, 0);
+      return cleared / (w * h);
+    }
+
+    function floodFillErase(canvas, startX, startY, tolerance = 38) {
+      const ctx = canvas.getContext('2d', { willReadFrequently: true });
+      const w = canvas.width, h = canvas.height;
+      const sx = Math.max(0, Math.min(w - 1, Math.round(startX)));
+      const sy = Math.max(0, Math.min(h - 1, Math.round(startY)));
+
+      const imgData = ctx.getImageData(0, 0, w, h);
+      const data = imgData.data;
+      const startIdx = (sy * w + sx) * 4;
+      if (data[startIdx + 3] === 0) return;
+
+      const sr = data[startIdx], sg = data[startIdx + 1], sb = data[startIdx + 2];
+      const tolSq = tolerance * tolerance * 3;
+      const visited = new Uint8Array(w * h);
+      const stack = [sx, sy];
+      visited[sy * w + sx] = 1;
+
+      while (stack.length > 0) {
+        const y = stack.pop();
+        const x = stack.pop();
+        const idx = (y * w + x) * 4;
+        data[idx + 3] = 0;
+
+        const neighbors = [[x - 1, y], [x + 1, y], [x, y - 1], [x, y + 1]];
+        for (const [nx, ny] of neighbors) {
+          if (nx < 0 || nx >= w || ny < 0 || ny >= h) continue;
+          const pos = ny * w + nx;
+          if (visited[pos]) continue;
+          const nIdx = pos * 4;
+          if (data[nIdx + 3] === 0) { visited[pos] = 1; continue; }
+          const dr = data[nIdx] - sr;
+          const dg = data[nIdx + 1] - sg;
+          const db = data[nIdx + 2] - sb;
+          if (dr * dr + dg * dg + db * db <= tolSq) {
+            visited[pos] = 1;
+            stack.push(nx, ny);
+          }
+        }
+      }
+      ctx.putImageData(imgData, 0, 0);
+    }
+
+    function removeSmallIslands(canvas) {
+      const ctx = canvas.getContext('2d', { willReadFrequently: true });
+      const w = canvas.width, h = canvas.height;
+      const imgData = ctx.getImageData(0, 0, w, h);
+      const data = imgData.data;
+      const visited = new Uint8Array(w * h);
+      const minPixels = Math.max(100, Math.floor(w * h * 0.01));
+
+      for (let y = 0; y < h; y++) {
+        for (let x = 0; x < w; x++) {
+          const startPos = y * w + x;
+          if (visited[startPos] || data[startPos * 4 + 3] < 20) continue;
+          const comp = [];
+          const stack = [x, y];
+          visited[startPos] = 1;
+          while (stack.length > 0) {
+            const cy = stack.pop(), cx = stack.pop();
+            const p = cy * w + cx;
+            comp.push(p);
+            const nbs = [[cx - 1, cy], [cx + 1, cy], [cx, cy - 1], [cx, cy + 1]];
+            for (const [nx, ny] of nbs) {
+              if (nx < 0 || nx >= w || ny < 0 || ny >= h) continue;
+              const np = ny * w + nx;
+              if (!visited[np] && data[np * 4 + 3] >= 20) {
+                visited[np] = 1;
+                stack.push(nx, ny);
+              }
+            }
+          }
+          if (comp.length < minPixels) {
+            for (const p of comp) data[p * 4 + 3] = 0;
+          }
+        }
+      }
+      ctx.putImageData(imgData, 0, 0);
+    }
+
+    function trimTransparentCanvas(canvas) {
+      const ctx = canvas.getContext('2d', { willReadFrequently: true });
+      const w = canvas.width, h = canvas.height;
+      const data = ctx.getImageData(0, 0, w, h).data;
+      let minX = w, minY = h, maxX = 0, maxY = 0, found = false;
+
+      for (let y = 0; y < h; y++) {
+        for (let x = 0; x < w; x++) {
+          if (data[(y * w + x) * 4 + 3] > 20) {
+            if (x < minX) minX = x;
+            if (x > maxX) maxX = x;
+            if (y < minY) minY = y;
+            if (y > maxY) maxY = y;
+            found = true;
+          }
+        }
+      }
+      if (!found) return canvas;
+      const pad = 4;
+      const cx = Math.max(0, minX - pad);
+      const cy = Math.max(0, minY - pad);
+      const cw = Math.min(w - cx, maxX - minX + 1 + pad * 2);
+      const ch = Math.min(h - cy, maxY - minY + 1 + pad * 2);
+
+      const trimmed = document.createElement('canvas');
+      trimmed.width = cw;
+      trimmed.height = ch;
+      trimmed.getContext('2d').drawImage(canvas, cx, cy, cw, ch, 0, 0, cw, ch);
+      return trimmed;
+    }
+
+    // ======================== 6. 트리 캔버스 렌더링 엔진 ========================
+    function getCanvasDimensions(baseWidth) {
+      const map = {
+        '3:4': [baseWidth, Math.round(baseWidth * 4 / 3)],
+        '9:16': [baseWidth, Math.round(baseWidth * 16 / 9)],
+        '4:5': [baseWidth, Math.round(baseWidth * 5 / 4)],
+        '1:1': [baseWidth, baseWidth],
+      };
+      return map[state.aspectRatio] || map['3:4'];
+    }
+
+    function renderPreview() {
+      const [w, h] = getCanvasDimensions(1080);
+      if (els.previewCanvas.width !== w || els.previewCanvas.height !== h) {
+        els.previewCanvas.width = w;
+        els.previewCanvas.height = h;
+      }
+      const ctx = els.previewCanvas.getContext('2d');
+      renderTreeScene(ctx, w, h, true);
+    }
+
+    function renderTreeScene(ctx, W, H, isPreview) {
+      // 1. 배경 채우기
+      ctx.save();
+      ctx.fillStyle = state.bgColor;
+      ctx.fillRect(0, 0, W, H);
+
+      // 은은한 비네팅
+      const grad = ctx.createRadialGradient(W * 0.5, H * 0.42, W * 0.12, W * 0.5, H * 0.5, W * 0.85);
+      grad.addColorStop(0, 'rgba(255,255,255,0.06)');
+      grad.addColorStop(1, 'rgba(0,0,0,0.18)');
+      ctx.fillStyle = grad;
+      ctx.fillRect(0, 0, W, H);
+      ctx.restore();
+
+      // 2. 배경 파티 장식
+      if (state.decoStyle === 'confetti') {
+        drawConfettiBackground(ctx, W, H);
+      } else if (state.decoStyle === 'snow') {
+        drawSnowBackground(ctx, W, H);
+      }
+
+      // 3. 상단 문구 & 소속 배지
+      drawHeaderTexts(ctx, W, H);
+
+      // 4. 트리 슬롯 좌표 계산
+      const rows = state.rows;
+      const numTreeRows = rows.length;
+      const maxCols = Math.max(...rows, 1);
+      const hasTrunkSlot = state.trunkCount > 0;
+      const totalVertRows = numTreeRows + (hasTrunkSlot ? 1 : 0);
+
+      const topMargin = H * (state.showStar ? 0.145 : 0.08);
+      const bottomMargin = H * ((state.showGifts || state.showTrunk) ? 0.13 : 0.06);
+      const sideMargin = W * 0.055;
+
+      const availW = W - sideMargin * 2;
+      const availH = H - topMargin - bottomMargin;
+
+      const overlapXFactor = 1 - state.overlapX / 100;
+      const overlapYFactor = 1 - state.overlapY / 100;
+      const ratioFactor = state.boxRatio / 100; // height / width
+
+      const maxBoxWByWidth = availW / (1 + (maxCols - 1) * overlapXFactor);
+      const maxBoxWByHeight = availH / (ratioFactor * (1 + (totalVertRows - 1) * overlapYFactor));
+      const boxW = Math.max(36, Math.min(maxBoxWByWidth, maxBoxWByHeight));
+      const boxH = boxW * ratioFactor;
+
+      const stepX = boxW * overlapXFactor;
+      const stepY = boxH * overlapYFactor;
+
+      const treeTotalH = boxH + (totalVertRows - 1) * stepY;
+      const startY = topMargin + Math.max(0, (availH - treeTotalH) * 0.45);
+
+      const slotRects = [];
+      let slotIdx = 0;
+
+      // 트리 본체 층 배치
+      for (let r = 0; r < numTreeRows; r++) {
+        const cols = rows[r];
+        const rowW = boxW + (cols - 1) * stepX;
+        const startX = (W - rowW) / 2;
+        const y = startY + r * stepY;
+        for (let c = 0; c < cols; c++) {
+          slotRects.push({
+            index: slotIdx++,
+            x: startX + c * stepX,
+            y,
+            w: boxW,
+            h: boxH,
+            baseRotate: 0,
+          });
+        }
+      }
+
+      const treeBottomY = startY + (numTreeRows - 1) * stepY + boxH;
+
+      // 기둥 슬롯 (기둥 포함형 / 기둥+선물형)
+      if (hasTrunkSlot) {
+        slotRects.push({
+          index: slotIdx++,
+          x: (W - boxW) / 2,
+          y: startY + numTreeRows * stepY,
+          w: boxW,
+          h: boxH,
+          baseRotate: 0,
+        });
+      }
+
+      // 좌우 기울어진 선물 슬롯 (기둥+선물형)
+      if (state.giftCount >= 2) {
+        const giftY = startY + numTreeRows * stepY + boxH * 0.12;
+        slotRects.push({
+          index: slotIdx++,
+          x: W * 0.22 - boxW * 0.5,
+          y: giftY,
+          w: boxW * 0.92,
+          h: boxH * 0.92,
+          baseRotate: -11,
+        });
+        slotRects.push({
+          index: slotIdx++,
+          x: W * 0.78 - boxW * 0.5,
+          y: giftY,
+          w: boxW * 0.92,
+          h: boxH * 0.92,
+          baseRotate: 11,
+        });
+      }
+
+      if (isPreview) {
+        state.renderedSlotRects = slotRects;
+      }
+
+      // 5. 나무 기둥 (박스 뒤쪽)
+      if (state.showTrunk && !hasTrunkSlot) {
+        drawTreeTrunk(ctx, W, H, treeBottomY, boxW);
+      }
+
+      // 6. 상단 왕별 (1번 박스 위쪽에 겹치지 않게 배치)
+      if (state.showStar && slotRects.length > 0) {
+        const topBox = slotRects[0];
+        const starRadius = Math.max(boxW * 0.42, W * 0.068);
+        const starCenterX = topBox.x + topBox.w / 2;
+        const starCenterY = Math.max(starRadius * 1.15, topBox.y - starRadius * 0.68);
+        drawTopStar(ctx, starCenterX, starCenterY, starRadius);
+      }
+
+      // 7. 박스 슬롯 그리기 (zIndex 순서대로 정렬 -> 클릭해 앞으로 가져온 사진이 맨 위!)
+      const sortedRects = [...slotRects].sort((a, b) => {
+        const za = state.slots[a.index]?.zIndex || 0;
+        const zb = state.slots[b.index]?.zIndex || 0;
+        if (za !== zb) return za - zb;
+        return a.index - b.index;
+      });
+
+      for (const rect of sortedRects) {
+        drawSlotBox(ctx, rect, isPreview);
+      }
+
+      // 8. 하단 선물 상자 장식
+      if (state.showGifts && state.giftCount === 0) {
+        drawBottomGifts(ctx, W, H);
+      }
+    }
+
+    function drawSlotBox(ctx, rect, isPreview) {
+      const slot = state.slots[rect.index];
+      const cx = rect.x + rect.w / 2;
+      const cy = rect.y + rect.h / 2;
+
+      ctx.save();
+      ctx.translate(cx, cy);
+      const totalRot = ((rect.baseRotate || 0) + (slot?.rotate || 0)) * Math.PI / 180;
+      if (totalRot !== 0) ctx.rotate(totalRot);
+
+      if (slot && slot.processedCanvas) {
+        const img = slot.processedCanvas;
+        const scale = (slot.scale || 100) / 100;
+        const ox = ((slot.offsetX || 0) / 100) * rect.w;
+        const oy = ((slot.offsetY || 0) / 100) * rect.h;
+
+        // 박스 크기에 비율 유지하여 맞춤 (contain 기반 + 넉넉히 채움)
+        const imgAspect = img.width / img.height;
+        const boxAspect = rect.w / rect.h;
+        let drawW, drawH;
+        if (imgAspect > boxAspect) {
+          drawW = rect.w * scale;
+          drawH = drawW / imgAspect;
+        } else {
+          drawH = rect.h * scale;
+          drawW = drawH * imgAspect;
+        }
+
+        if (state.showBoxShadow) {
+          ctx.shadowColor = 'rgba(0, 0, 0, 0.34)';
+          ctx.shadowBlur = rect.w * 0.1;
+          ctx.shadowOffsetX = 0;
+          ctx.shadowOffsetY = rect.h * 0.04;
+        }
+
+        ctx.drawImage(img, -drawW / 2 + ox, -drawH / 2 + oy, drawW, drawH);
+
+        // 자리 바꾸기 선택 강조 테두리
+        if (isPreview && state.swapMode && state.swapFirstIndex === rect.index) {
+          ctx.shadowColor = 'transparent';
+          ctx.strokeStyle = '#fbbf24';
+          ctx.lineWidth = Math.max(4, rect.w * 0.035);
+          ctx.strokeRect(-rect.w / 2, -rect.h / 2, rect.w, rect.h);
+        }
+
+        // 미리보기 번호 배지
+        if (isPreview && state.showGuides) {
+          ctx.shadowColor = 'transparent';
+          const r = Math.max(12, rect.w * 0.11);
+          ctx.fillStyle = 'rgba(15, 23, 42, 0.72)';
+          ctx.beginPath();
+          ctx.arc(-rect.w / 2 + r * 1.15, -rect.h / 2 + r * 1.15, r, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.fillStyle = '#ffffff';
+          ctx.font = `700 ${Math.round(r * 1.1)}px "Inter", sans-serif`;
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          ctx.fillText(String(rect.index + 1), -rect.w / 2 + r * 1.15, -rect.h / 2 + r * 1.18);
+        }
+      } else if (isPreview) {
+        // 빈 슬롯 가이드 박스
+        const radius = Math.min(rect.w, rect.h) * 0.1;
+        ctx.fillStyle = (state.swapMode && state.swapFirstIndex === rect.index)
+          ? 'rgba(251, 191, 36, 0.35)'
+          : 'rgba(255, 255, 255, 0.16)';
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.65)';
+        ctx.lineWidth = Math.max(2, rect.w * 0.02);
+        ctx.setLineDash([8, 6]);
+        roundRectPath(ctx, -rect.w / 2, -rect.h / 2, rect.w, rect.h, radius);
+        ctx.fill();
+        ctx.stroke();
+        ctx.setLineDash([]);
+
+        ctx.fillStyle = '#ffffff';
+        ctx.font = `800 ${Math.round(Math.min(rect.w, rect.h) * 0.25)}px "Inter", sans-serif`;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(String(rect.index + 1), 0, -rect.h * 0.07);
+
+        ctx.fillStyle = 'rgba(255,255,255,0.85)';
+        ctx.font = `600 ${Math.round(Math.min(rect.w, rect.h) * 0.12)}px "Noto Sans KR", sans-serif`;
+        ctx.fillText('사진 추가', 0, rect.h * 0.18);
+      }
+
+      ctx.restore();
+    }
+
+    function roundRectPath(ctx, x, y, w, h, r) {
+      ctx.beginPath();
+      ctx.moveTo(x + r, y);
+      ctx.arcTo(x + w, y, x + w, y + h, r);
+      ctx.arcTo(x + w, y + h, x, y + h, r);
+      ctx.arcTo(x, y + h, x, y, r);
+      ctx.arcTo(x, y, x + w, y, r);
+      ctx.closePath();
+    }
+
+    function drawTopStar(ctx, cx, cy, outerR) {
+      ctx.save();
+      ctx.translate(cx, cy);
+      ctx.shadowColor = 'rgba(253, 224, 71, 0.75)';
+      ctx.shadowBlur = outerR * 0.55;
+
+      const innerR = outerR * 0.48;
+      const spikes = 5;
+      const grad = ctx.createRadialGradient(-outerR * 0.15, -outerR * 0.2, outerR * 0.1, 0, 0, outerR);
+      grad.addColorStop(0, '#FEF08A');
+      grad.addColorStop(0.55, '#FACC15');
+      grad.addColorStop(1, '#EAB308');
+
+      ctx.beginPath();
+      for (let i = 0; i < spikes * 2; i++) {
+        const r = i % 2 === 0 ? outerR : innerR;
+        const angle = (i * Math.PI) / spikes - Math.PI / 2;
+        const x = Math.cos(angle) * r;
+        const y = Math.sin(angle) * r;
+        if (i === 0) ctx.moveTo(x, y);
+        else ctx.lineTo(x, y);
+      }
+      ctx.closePath();
+      ctx.fillStyle = grad;
+      ctx.fill();
+      ctx.lineWidth = Math.max(2, outerR * 0.05);
+      ctx.strokeStyle = '#FDE047';
+      ctx.lineJoin = 'round';
+      ctx.stroke();
+
+      // 별 하이라이트
+      ctx.shadowColor = 'transparent';
+      ctx.fillStyle = 'rgba(255,255,255,0.45)';
+      ctx.beginPath();
+      ctx.ellipse(-outerR * 0.15, -outerR * 0.22, outerR * 0.16, outerR * 0.09, -0.5, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
+    }
+
+    function drawTreeTrunk(ctx, W, H, treeBottomY, boxW) {
+      const trunkW = Math.max(W * 0.14, boxW * 1.15);
+      const trunkX = (W - trunkW) / 2;
+      const trunkY = treeBottomY - boxW * 0.15;
+      const trunkH = H - trunkY + 10;
+
+      ctx.save();
+      const grad = ctx.createLinearGradient(trunkX, trunkY, trunkX + trunkW, trunkY);
+      grad.addColorStop(0, '#5C3A21');
+      grad.addColorStop(0.45, '#7C4D2B');
+      grad.addColorStop(1, '#4A2C16');
+      ctx.fillStyle = grad;
+      ctx.fillRect(trunkX, trunkY, trunkW, trunkH);
+
+      // 나무결
+      ctx.strokeStyle = 'rgba(42, 22, 8, 0.45)';
+      ctx.lineWidth = Math.max(2, W * 0.003);
+      for (let i = 1; i <= 4; i++) {
+        const lx = trunkX + (trunkW * i) / 5;
+        ctx.beginPath();
+        ctx.moveTo(lx, trunkY);
+        ctx.bezierCurveTo(lx - 6, trunkY + trunkH * 0.35, lx + 8, trunkY + trunkH * 0.65, lx - 3, H);
+        ctx.stroke();
+      }
+      ctx.restore();
+    }
+
+    function drawBottomGifts(ctx, W, H) {
+      const gifts = [
+        { x: 0.02, w: 0.15, h: 0.09, body: '#F3E5AB', ribbon: '#1B4D3E' },
+        { x: 0.13, w: 0.13, h: 0.075, body: '#DC2626', ribbon: '#F59E0B' },
+        { x: 0.24, w: 0.16, h: 0.10, body: '#15803D', ribbon: '#EF4444' },
+        { x: 0.52, w: 0.13, h: 0.08, body: '#E11D48', ribbon: '#86EFAC' },
+        { x: 0.63, w: 0.16, h: 0.095, body: '#166534', ribbon: '#FACC15' },
+        { x: 0.78, w: 0.11, h: 0.075, body: '#FEF3C7', ribbon: '#B91C1C' },
+        { x: 0.87, w: 0.12, h: 0.085, body: '#14532D', ribbon: '#FDE047' },
+      ];
+
+      gifts.forEach(g => {
+        const gx = W * g.x;
+        const gw = W * g.w;
+        const gh = H * g.h;
+        const gy = H - gh + 4;
+
+        ctx.save();
+        ctx.shadowColor = 'rgba(0,0,0,0.28)';
+        ctx.shadowBlur = 12;
+        ctx.shadowOffsetY = -2;
+
+        // 상자 본체
+        ctx.fillStyle = g.body;
+        roundRectPath(ctx, gx, gy, gw, gh, 6);
+        ctx.fill();
+
+        ctx.shadowColor = 'transparent';
+        // 세로 리본
+        ctx.fillStyle = g.ribbon;
+        const rw = gw * 0.18;
+        ctx.fillRect(gx + (gw - rw) / 2, gy, rw, gh);
+        // 가로 리본
+        ctx.fillRect(gx, gy + gh * 0.25, gw, rw * 0.85);
+
+        // 리본 매듭
+        const bowY = gy;
+        const bowX = gx + gw / 2;
+        ctx.beginPath();
+        ctx.ellipse(bowX - rw * 0.9, bowY - rw * 0.45, rw * 0.95, rw * 0.55, -0.35, 0, Math.PI * 2);
+        ctx.ellipse(bowX + rw * 0.9, bowY - rw * 0.45, rw * 0.95, rw * 0.55, 0.35, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
+      });
+    }
+
+    function drawConfettiBackground(ctx, W, H) {
+      const sparkles = [
+        { x: 0.07, y: 0.21, s: 0.022, c: '#6EE7B7' },
+        { x: 0.70, y: 0.11, s: 0.018, c: '#6EE7B7' },
+        { x: 0.85, y: 0.14, s: 0.032, c: '#FDE047' },
+        { x: 0.67, y: 0.22, s: 0.030, c: '#FDE047' },
+        { x: 0.78, y: 0.33, s: 0.016, c: '#6EE7B7' },
+        { x: 0.23, y: 0.42, s: 0.024, c: '#FDE047' },
+        { x: 0.11, y: 0.48, s: 0.028, c: '#FFFFFF' },
+        { x: 0.92, y: 0.59, s: 0.026, c: '#FFFFFF' },
+      ];
+
+      sparkles.forEach(sp => {
+        const cx = W * sp.x, cy = H * sp.y, r = W * sp.s;
+        ctx.save();
+        ctx.fillStyle = sp.c;
+        ctx.beginPath();
+        ctx.moveTo(cx, cy - r);
+        ctx.quadraticCurveTo(cx + r * 0.15, cy - r * 0.15, cx + r, cy);
+        ctx.quadraticCurveTo(cx + r * 0.15, cy + r * 0.15, cx, cy + r);
+        ctx.quadraticCurveTo(cx - r * 0.15, cy + r * 0.15, cx - r, cy);
+        ctx.quadraticCurveTo(cx - r * 0.15, cy - r * 0.15, cx, cy - r);
+        ctx.fill();
+        ctx.restore();
+      });
+
+      const curls = [
+        { x: 0.13, y: 0.30, rot: 0.4, c: '#FFFFFF', sc: 1 },
+        { x: 0.88, y: 0.28, rot: -0.6, c: '#FFFFFF', sc: 1.05 },
+        { x: 0.78, y: 0.41, rot: -0.2, c: '#FFFFFF', sc: 0.95 },
+        { x: 0.09, y: 0.60, rot: 0.3, c: '#6EE7B7', sc: 0.9 },
+        { x: 0.89, y: 0.45, rot: 0.2, c: '#6EE7B7', sc: 0.8 },
+      ];
+
+      curls.forEach(cr => {
+        ctx.save();
+        ctx.translate(W * cr.x, H * cr.y);
+        ctx.rotate(cr.rot);
+        ctx.scale(cr.sc, cr.sc);
+        ctx.strokeStyle = cr.c;
+        ctx.lineWidth = Math.max(4, W * 0.009);
+        ctx.lineCap = 'round';
+        ctx.beginPath();
+        const u = W * 0.025;
+        ctx.moveTo(-u * 2.2, 0);
+        ctx.bezierCurveTo(-u * 1.5, -u * 1.4, -u * 0.4, -u * 1.4, -u * 0.6, 0);
+        ctx.bezierCurveTo(-u * 0.8, u * 0.8, 0, u * 0.9, u * 0.4, -u * 0.5);
+        ctx.bezierCurveTo(u * 0.8, -u * 1.4, u * 1.8, -u * 0.8, u * 2.1, u * 0.3);
+        ctx.stroke();
+        ctx.restore();
+      });
+    }
+
+    function drawSnowBackground(ctx, W, H) {
+      let seed = 42;
+      const rand = () => {
+        seed = (seed * 1664525 + 1013904223) % 4294967296;
+        return seed / 4294967296;
+      };
+      ctx.save();
+      for (let i = 0; i < 90; i++) {
+        const x = rand() * W;
+        const y = rand() * H;
+        const r = (rand() * 0.006 + 0.002) * W;
+        ctx.fillStyle = `rgba(255,255,255,${(rand() * 0.55 + 0.25).toFixed(2)})`;
+        ctx.beginPath();
+        ctx.arc(x, y, r, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      ctx.restore();
+    }
+
+    function drawHeaderTexts(ctx, W, H) {
+      if (state.titleText.trim()) {
+        ctx.save();
+        ctx.translate(W * 0.06, H * 0.085);
+        ctx.rotate(-0.12);
+        const fontSize = Math.round(W * 0.052);
+        ctx.font = `700 ${fontSize}px "Fredoka", "Jua", sans-serif`;
+        ctx.lineWidth = Math.max(3, W * 0.008);
+        ctx.strokeStyle = 'rgba(0,0,0,0.28)';
+        ctx.strokeText(state.titleText.trim(), 0, 0);
+        ctx.fillStyle = '#FDE047';
+        ctx.fillText(state.titleText.trim(), 0, 0);
+        ctx.restore();
+      }
+
+      if (state.badgeText.trim()) {
+        ctx.save();
+        const fontSize = Math.round(W * 0.036);
+        ctx.font = `700 ${fontSize}px "Jua", "Noto Sans KR", sans-serif`;
+        ctx.textAlign = 'right';
+        ctx.fillStyle = '#FFFFFF';
+        ctx.shadowColor = 'rgba(0,0,0,0.35)';
+        ctx.shadowBlur = 8;
+        ctx.fillText(state.badgeText.trim(), W * 0.94, H * 0.075);
+        ctx.restore();
+      }
+    }
+
+    // ======================== 7. 사진 편집 & 수동 박스 크롭 모달 ========================
+    function openEditorModal(slotIndex) {
+      const slot = state.slots[slotIndex];
+      if (!slot || !slot.processedCanvas) return;
+
+      editorState.slotIndex = slotIndex;
+      editorState.origCanvas = cloneCanvas(slot.origCanvas || slot.processedCanvas);
+      editorState.workCanvas = cloneCanvas(slot.processedCanvas);
+      editorState.undoStack = [];
+      editorState.scale = slot.scale ?? 100;
+      editorState.offsetX = slot.offsetX ?? 0;
+      editorState.offsetY = slot.offsetY ?? 0;
+      editorState.rotate = slot.rotate ?? 0;
+
+      els.editorSlotBadge.textContent = `#${slotIndex + 1}번 박스`;
+      els.rangeTScale.value = editorState.scale;
+      els.tScaleVal.textContent = `${editorState.scale}%`;
+      els.rangeTOffsetX.value = editorState.offsetX;
+      els.tOffsetXVal.textContent = `${editorState.offsetX}`;
+      els.rangeTOffsetY.value = editorState.offsetY;
+      els.tOffsetYVal.textContent = `${editorState.offsetY}`;
+      els.rangeTRotate.value = editorState.rotate;
+      els.tRotateVal.textContent = `${editorState.rotate}°`;
+
+      setEditorTool('crop');
+      resetCropRect();
+      els.editorModal.classList.remove('hidden');
+      drawEditorCanvas();
+    }
+
+    function closeEditorModal() {
+      els.editorModal.classList.add('hidden');
+      editorState.slotIndex = null;
+    }
+
+    function setEditorTool(tool) {
+      editorState.tool = tool;
+      document.querySelectorAll('.editor-tool-btn').forEach(btn => {
+        const active = btn.dataset.tool === tool;
+        btn.className = `editor-tool-btn py-2 rounded-xl text-xs font-bold border transition ${
+          active
+            ? 'bg-rose-600 text-white border-rose-600'
+            : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-50'
+        }`;
+      });
+      els.cropActionBar.classList.toggle('hidden', tool !== 'crop');
+
+      const hints = {
+        crop: '현재 도구: <b>반짝이 크롭</b> — 4개 꼭짓점을 반짝이 모서리에 딱 맞게 드래그한 뒤 [자르기]를 누르세요.',
+        wand: '현재 도구: <b>매직완드</b> — 제거할 배경 색상을 클릭하세요.',
+        erase: '현재 도구: <b>지우개</b> — 지우고 싶은 영역을 드래그하세요.',
+        restore: '현재 도구: <b>복구</b> — 지워진 영역을 다시 살릴 부분을 드래그하세요.',
+      };
+      els.editorToolHint.innerHTML = hints[tool] || '';
+      drawEditorCanvas();
+    }
+
+    function resetCropRect() {
+      if (!editorState.workCanvas) return;
+      const w = editorState.workCanvas.width;
+      const h = editorState.workCanvas.height;
+      const padX = Math.round(w * 0.08);
+      const padY = Math.round(h * 0.08);
+      editorState.cropQuad = {
+        tl: { x: padX, y: padY },
+        tr: { x: w - padX, y: padY },
+        br: { x: w - padX, y: h - padY },
+        bl: { x: padX, y: h - padY },
+      };
+    }
+
+    function pushEditorUndo() {
+      if (!editorState.workCanvas) return;
+      editorState.undoStack.push({
+        work: cloneCanvas(editorState.workCanvas),
+        orig: cloneCanvas(editorState.origCanvas),
+      });
+      if (editorState.undoStack.length > 15) editorState.undoStack.shift();
+    }
+
+    function drawEditorCanvas() {
+      if (!editorState.workCanvas) return;
+      const w = editorState.workCanvas.width;
+      const h = editorState.workCanvas.height;
+      if (els.editorCanvas.width !== w || els.editorCanvas.height !== h) {
+        els.editorCanvas.width = w;
+        els.editorCanvas.height = h;
+      }
+      const ctx = els.editorCanvas.getContext('2d');
+      ctx.clearRect(0, 0, w, h);
+      ctx.drawImage(editorState.workCanvas, 0, 0);
+
+      if (editorState.tool === 'crop' && editorState.cropQuad) {
+        const q = editorState.cropQuad;
+        ctx.save();
+        // 다각형 바깥 영역 어둡게 (evenodd 클리핑)
+        ctx.fillStyle = 'rgba(15, 23, 42, 0.58)';
+        ctx.beginPath();
+        ctx.rect(0, 0, w, h);
+        ctx.moveTo(q.tl.x, q.tl.y);
+        ctx.lineTo(q.tr.x, q.tr.y);
+        ctx.lineTo(q.br.x, q.br.y);
+        ctx.lineTo(q.bl.x, q.bl.y);
+        ctx.closePath();
+        ctx.fill('evenodd');
+
+        // 반짝이 크롭 테두리
+        const lw = Math.max(2, Math.round(Math.max(w, h) * 0.005));
+        ctx.strokeStyle = '#fb7185';
+        ctx.lineWidth = lw;
+        ctx.setLineDash([lw * 3, lw * 2]);
+        ctx.beginPath();
+        ctx.moveTo(q.tl.x, q.tl.y);
+        ctx.lineTo(q.tr.x, q.tr.y);
+        ctx.lineTo(q.br.x, q.br.y);
+        ctx.lineTo(q.bl.x, q.bl.y);
+        ctx.closePath();
+        ctx.stroke();
+        ctx.setLineDash([]);
+
+        // 4개 꼭짓점(원형) + 4개 변 중간점(사각형) 핸들
+        const hs = Math.max(12, Math.round(Math.max(w, h) * 0.028));
+        const corners = [q.tl, q.tr, q.br, q.bl];
+        ctx.fillStyle = '#ffffff';
+        ctx.strokeStyle = '#e11d48';
+        ctx.lineWidth = Math.max(2, lw * 0.9);
+        corners.forEach((pt) => {
+          ctx.beginPath();
+          ctx.arc(pt.x, pt.y, hs * 0.55, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.stroke();
+        });
+
+        const mids = [
+          { x: (q.tl.x + q.tr.x) / 2, y: (q.tl.y + q.tr.y) / 2 },
+          { x: (q.tr.x + q.br.x) / 2, y: (q.tr.y + q.br.y) / 2 },
+          { x: (q.br.x + q.bl.x) / 2, y: (q.br.y + q.bl.y) / 2 },
+          { x: (q.bl.x + q.tl.x) / 2, y: (q.bl.y + q.tl.y) / 2 },
+        ];
+        const ms = hs * 0.72;
+        mids.forEach((pt) => {
+          ctx.beginPath();
+          ctx.rect(pt.x - ms / 2, pt.y - ms / 2, ms, ms);
+          ctx.fill();
+          ctx.stroke();
+        });
+        ctx.restore();
+      }
+    }
+
+    function getEditorPointerPos(e) {
+      const rect = els.editorCanvas.getBoundingClientRect();
+      const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+      const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+      const scaleX = els.editorCanvas.width / rect.width;
+      const scaleY = els.editorCanvas.height / rect.height;
+      return {
+        x: Math.max(0, Math.min(els.editorCanvas.width, (clientX - rect.left) * scaleX)),
+        y: Math.max(0, Math.min(els.editorCanvas.height, (clientY - rect.top) * scaleY)),
+      };
+    }
+
+    function isPointInQuad(x, y, q) {
+      const pts = [q.tl, q.tr, q.br, q.bl];
+      let inside = false;
+      for (let i = 0, j = pts.length - 1; i < pts.length; j = i++) {
+        const xi = pts[i].x, yi = pts[i].y;
+        const xj = pts[j].x, yj = pts[j].y;
+        const intersect = ((yi > y) !== (yj > y)) && (x < (xj - xi) * (y - yi) / ((yj - yi) || 1e-6) + xi);
+        if (intersect) inside = !inside;
+      }
+      return inside;
+    }
+
+    function hitTestCropHandle(x, y) {
+      const q = editorState.cropQuad;
+      if (!q) return 'new';
+      const tol = Math.max(24, Math.max(els.editorCanvas.width, els.editorCanvas.height) * 0.05);
+      const dist = (p) => Math.hypot(x - p.x, y - p.y);
+
+      if (dist(q.tl) <= tol) return 'tl';
+      if (dist(q.tr) <= tol) return 'tr';
+      if (dist(q.br) <= tol) return 'br';
+      if (dist(q.bl) <= tol) return 'bl';
+
+      const midN = { x: (q.tl.x + q.tr.x) / 2, y: (q.tl.y + q.tr.y) / 2 };
+      const midE = { x: (q.tr.x + q.br.x) / 2, y: (q.tr.y + q.br.y) / 2 };
+      const midS = { x: (q.br.x + q.bl.x) / 2, y: (q.br.y + q.bl.y) / 2 };
+      const midW = { x: (q.bl.x + q.tl.x) / 2, y: (q.bl.y + q.tl.y) / 2 };
+
+      if (dist(midN) <= tol) return 'n';
+      if (dist(midE) <= tol) return 'e';
+      if (dist(midS) <= tol) return 's';
+      if (dist(midW) <= tol) return 'w';
+
+      if (isPointInQuad(x, y, q)) return 'move';
+      return 'new';
+    }
+
+    function applyCropRect() {
+      if (!editorState.workCanvas || !editorState.cropQuad) return;
+      const q = editorState.cropQuad;
+      const minX = Math.min(q.tl.x, q.tr.x, q.br.x, q.bl.x);
+      const maxX = Math.max(q.tl.x, q.tr.x, q.br.x, q.bl.x);
+      const minY = Math.min(q.tl.y, q.tr.y, q.br.y, q.bl.y);
+      const maxY = Math.max(q.tl.y, q.tr.y, q.br.y, q.bl.y);
+      if (maxX - minX < 20 || maxY - minY < 20) {
+        showToast('크롭 영역이 너무 작습니다.', 'error');
+        return;
+      }
+      pushEditorUndo();
+      editorState.workCanvas = clipCanvasByQuad(editorState.workCanvas, q);
+      editorState.origCanvas = clipCanvasByQuad(editorState.origCanvas, q);
+      resetCropRect();
+      drawEditorCanvas();
+      showToast('반짝이 테두리대로 깔끔하게 잘랐습니다!', 'success');
+    }
+
+    function resetCropRect() {
+      if (!editorState.workCanvas) return;
+      const w = editorState.workCanvas.width;
+      const h = editorState.workCanvas.height;
+      const padX = Math.round(w * 0.08);
+      const padY = Math.round(h * 0.08);
+      editorState.cropRect = {
+        x: padX,
+        y: padY,
+        w: Math.max(40, w - padX * 2),
+        h: Math.max(40, h - padY * 2),
+      };
+    }
+
+    function pushEditorUndo() {
+      if (!editorState.workCanvas) return;
+      editorState.undoStack.push({
+        work: cloneCanvas(editorState.workCanvas),
+        orig: cloneCanvas(editorState.origCanvas),
+      });
+      if (editorState.undoStack.length > 15) editorState.undoStack.shift();
+    }
+
+    function drawEditorCanvas() {
+      if (!editorState.workCanvas) return;
+      const w = editorState.workCanvas.width;
+      const h = editorState.workCanvas.height;
+      if (els.editorCanvas.width !== w || els.editorCanvas.height !== h) {
+        els.editorCanvas.width = w;
+        els.editorCanvas.height = h;
+      }
+      const ctx = els.editorCanvas.getContext('2d');
+      ctx.clearRect(0, 0, w, h);
+      ctx.drawImage(editorState.workCanvas, 0, 0);
+
+      if (editorState.tool === 'crop' && editorState.cropRect) {
+        const r = editorState.cropRect;
+        // 바깥 영역 어둡게
+        ctx.save();
+        ctx.fillStyle = 'rgba(15, 23, 42, 0.55)';
+        ctx.fillRect(0, 0, w, r.y);
+        ctx.fillRect(0, r.y + r.h, w, h - (r.y + r.h));
+        ctx.fillRect(0, r.y, r.x, r.h);
+        ctx.fillRect(r.x + r.w, r.y, w - (r.x + r.w), r.h);
+
+        // 크롭 테두리
+        const lw = Math.max(2, Math.round(Math.max(w, h) * 0.005));
+        ctx.strokeStyle = '#fb7185';
+        ctx.lineWidth = lw;
+        ctx.setLineDash([lw * 3, lw * 2]);
+        ctx.strokeRect(r.x, r.y, r.w, r.h);
+        ctx.setLineDash([]);
+
+        // 8개 핸들 그리기
+        const hs = Math.max(10, Math.round(Math.max(w, h) * 0.024));
+        const handles = [
+          [r.x, r.y], [r.x + r.w / 2, r.y], [r.x + r.w, r.y],
+          [r.x, r.y + r.h / 2], [r.x + r.w, r.y + r.h / 2],
+          [r.x, r.y + r.h], [r.x + r.w / 2, r.y + r.h], [r.x + r.w, r.y + r.h],
+        ];
+        ctx.fillStyle = '#ffffff';
+        ctx.strokeStyle = '#e11d48';
+        ctx.lineWidth = Math.max(2, lw * 0.8);
+        handles.forEach(([hx, hy]) => {
+          ctx.beginPath();
+          ctx.rect(hx - hs / 2, hy - hs / 2, hs, hs);
+          ctx.fill();
+          ctx.stroke();
+        });
+        ctx.restore();
+      }
+    }
+
+    function getEditorPointerPos(e) {
+      const rect = els.editorCanvas.getBoundingClientRect();
+      const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+      const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+      const scaleX = els.editorCanvas.width / rect.width;
+      const scaleY = els.editorCanvas.height / rect.height;
+      return {
+        x: Math.max(0, Math.min(els.editorCanvas.width, (clientX - rect.left) * scaleX)),
+        y: Math.max(0, Math.min(els.editorCanvas.height, (clientY - rect.top) * scaleY)),
+      };
+    }
+
+    function hitTestCropHandle(x, y) {
+      const r = editorState.cropRect;
+      if (!r) return 'new';
+      const tol = Math.max(22, Math.max(els.editorCanvas.width, els.editorCanvas.height) * 0.045);
+      const near = (a, b) => Math.abs(a - b) <= tol;
+
+      const left = near(x, r.x);
+      const right = near(x, r.x + r.w);
+      const top = near(y, r.y);
+      const bottom = near(y, r.y + r.h);
+
+      if (top && left) return 'nw';
+      if (top && right) return 'ne';
+      if (bottom && left) return 'sw';
+      if (bottom && right) return 'se';
+      if (top && x > r.x && x < r.x + r.w) return 'n';
+      if (bottom && x > r.x && x < r.x + r.w) return 's';
+      if (left && y > r.y && y < r.y + r.h) return 'w';
+      if (right && y > r.y && y < r.y + r.h) return 'e';
+      if (x >= r.x && x <= r.x + r.w && y >= r.y && y <= r.y + r.h) return 'move';
+      return 'new';
+    }
+
+    function applyCropRect() {
+      if (!editorState.workCanvas || !editorState.cropRect) return;
+      const r = editorState.cropRect;
+      const cw = Math.round(r.w), ch = Math.round(r.h);
+      if (cw < 20 || ch < 20) {
+        showToast('크롭 영역이 너무 작습니다.', 'error');
+        return;
+      }
+      pushEditorUndo();
+      const croppedWork = document.createElement('canvas');
+      croppedWork.width = cw;
+      croppedWork.height = ch;
+      croppedWork.getContext('2d').drawImage(editorState.workCanvas, r.x, r.y, cw, ch, 0, 0, cw, ch);
+
+      const croppedOrig = document.createElement('canvas');
+      croppedOrig.width = cw;
+      croppedOrig.height = ch;
+      croppedOrig.getContext('2d').drawImage(editorState.origCanvas, r.x, r.y, cw, ch, 0, 0, cw, ch);
+
+      editorState.workCanvas = croppedWork;
+      editorState.origCanvas = croppedOrig;
+      resetCropRect();
+      drawEditorCanvas();
+      showToast('선택한 상자 영역으로 깔끔하게 잘랐습니다!', 'success');
+    }
+
+    function applyBrushAt(x, y) {
+      if (!editorState.workCanvas) return;
+      const ctx = editorState.workCanvas.getContext('2d');
+      const radius = (editorState.brushSize / 2) * (editorState.workCanvas.width / 420);
+
+      if (editorState.tool === 'erase') {
+        ctx.save();
+        ctx.globalCompositeOperation = 'destination-out';
+        ctx.beginPath();
+        ctx.arc(x, y, radius, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
+      } else if (editorState.tool === 'restore') {
+        ctx.save();
+        ctx.beginPath();
+        ctx.arc(x, y, radius, 0, Math.PI * 2);
+        ctx.clip();
+        ctx.drawImage(editorState.origCanvas, 0, 0);
+        ctx.restore();
+      }
+      drawEditorCanvas();
+    }
+
+    // ======================== 8. 고해상도 PNG 다운로드 ========================
+    function downloadHighResPNG() {
+      const [exportW, exportH] = getCanvasDimensions(state.exportWidth);
+      const exportCanvas = document.createElement('canvas');
+      exportCanvas.width = exportW;
+      exportCanvas.height = exportH;
+      const ctx = exportCanvas.getContext('2d');
+      renderTreeScene(ctx, exportW, exportH, false);
+
+      exportCanvas.toBlob((blob) => {
+        if (!blob) {
+          showToast('이미지 생성 중 오류가 발생했습니다.', 'error');
+          return;
+        }
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `박스트리_${state.peopleCount}명_${exportW}x${exportH}.png`;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        setTimeout(() => URL.revokeObjectURL(url), 1000);
+        showToast(`고해상도 이미지(${exportW}×${exportH})를 다운로드했습니다!`, 'success');
+      }, 'image/png');
+    }
+
+    // ======================== 9. 이벤트 바인딩 ========================
+    function setupEvents() {
+      // 1) 인원 수 조절 (- / + / 직접 입력)
+      els.btnDecreaseCount.addEventListener('click', () => {
+        applyPeopleCountAndLayout(state.peopleCount - 1, state.layoutMode);
+      });
+      els.btnIncreaseCount.addEventListener('click', () => {
+        applyPeopleCountAndLayout(state.peopleCount + 1, state.layoutMode);
+      });
+      els.peopleCountInput.addEventListener('input', () => {
+        const val = parseInt(els.peopleCountInput.value, 10);
+        if (!isNaN(val) && val >= 1 && val <= 50) {
+          applyPeopleCountAndLayout(val, state.layoutMode);
+        }
+      });
+      els.peopleCountInput.addEventListener('change', () => {
+        applyPeopleCountAndLayout(els.peopleCountInput.value, state.layoutMode);
+      });
+
+      // 트리 모양 모드 전환
+      document.querySelectorAll('.layout-mode-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          applyPeopleCountAndLayout(state.peopleCount, btn.dataset.layoutMode);
+        });
+      });
+
+      // 층별 인원 직접 조정
+      els.btnApplyCustomRows.addEventListener('click', () => {
+        const parsed = els.customRowsInput.value
+          .split(',')
+          .map(s => parseInt(s.trim(), 10))
+          .filter(n => !isNaN(n) && n > 0 && n <= 15);
+        if (parsed.length === 0) {
+          showToast('올바른 숫자를 쉼표로 구분해 입력해 주세요. (예: 1, 2, 3, 4)', 'error');
+          return;
+        }
+        state.rows = parsed;
+        state.peopleCount = getTotalSlotCount();
+        els.peopleCountInput.value = state.peopleCount;
+        syncSlotsToTotalCount();
+        updateLayoutUI();
+        renderSlotGrid();
+        renderPreview();
+        showToast('층별 인원 구성을 적용했습니다.', 'success');
+      });
+
+      // 2) 일괄 & 단일 파일 업로드
+      els.batchFileInput.addEventListener('change', (e) => {
+        if (e.target.files?.length) {
+          handleBatchFiles(e.target.files);
+          e.target.value = '';
+        }
+      });
+
+      els.dropZone.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        els.dropZone.classList.add('border-rose-500', 'bg-rose-100/60');
+      });
+      els.dropZone.addEventListener('dragleave', () => {
+        els.dropZone.classList.remove('border-rose-500', 'bg-rose-100/60');
+      });
+      els.dropZone.addEventListener('drop', (e) => {
+        e.preventDefault();
+        els.dropZone.classList.remove('border-rose-500', 'bg-rose-100/60');
+        if (e.dataTransfer.files?.length) handleBatchFiles(e.dataTransfer.files);
+      });
+
+      els.singleFileInput.addEventListener('change', async (e) => {
+        const file = e.target.files?.[0];
+        if (!file || state.activeUploadSlotIndex === null) return;
+        const idx = state.activeUploadSlotIndex;
+        try {
+          const canvas = await loadFileToCanvas(file);
+          state.slots[idx].origCanvas = cloneCanvas(canvas);
+          state.slots[idx].processedCanvas = cloneCanvas(canvas);
+          state.slots[idx].scale = 100;
+          state.slots[idx].offsetX = 0;
+          state.slots[idx].offsetY = 0;
+          state.slots[idx].rotate = 0;
+          renderSlotGrid();
+          renderPreview();
+          showToast(`#${idx + 1}번 박스에 사진을 넣었습니다.`, 'success');
+        } catch (err) {
+          showToast('사진을 불러오지 못했습니다.', 'error');
+        }
+      });
+
+      // 전체 비우기
+      els.btnClearAllPhotos.addEventListener('click', () => {
+        state.slots = state.slots.map(() => createEmptySlot());
+        renderSlotGrid();
+        renderPreview();
+        showToast('모든 사진을 비웠습니다.', 'info');
+      });
+
+      // 일괄 AI 박스 크롭 + 발/손 누끼
+      els.btnBatchAiBg.addEventListener('click', async () => {
+        const targets = state.slots
+          .map((s, idx) => ({ s, idx }))
+          .filter(item => item.s.processedCanvas);
+        if (targets.length === 0) {
+          showToast('먼저 사진을 업로드해 주세요.', 'info');
+          return;
+        }
+        els.batchLoadingTitle.textContent = 'AI가 상자 크롭 및 튀어나온 발/손 누끼를 처리 중입니다...';
+        els.batchLoadingOverlay.classList.remove('hidden');
+        let ok = 0, fail = 0;
+        for (let i = 0; i < targets.length; i++) {
+          const { s, idx } = targets[i];
+          els.batchLoadingSub.textContent = `${i + 1} / ${targets.length} 처리 중 (#${idx + 1}번)`;
+          try {
+            const res = await removeBackgroundWithGeminiAI(s.origCanvas || s.processedCanvas);
+            s.processedCanvas = res;
+            ok++;
+            renderPreview();
+          } catch (err) {
+            console.error(err);
+            fail++;
+          }
+        }
+        els.batchLoadingOverlay.classList.add('hidden');
+        renderSlotGrid();
+        renderPreview();
+        if (fail > 0) {
+          showToast(`${ok}장 완료, ${fail}장 실패 (실패한 사진은 클릭해 수동 크롭하세요)`, 'info');
+        } else {
+          showToast(`${ok}장 모두 상자 크롭+누끼가 완료되었습니다!`, 'success');
+        }
+      });
+
+      // 일괄 AI 박스 크롭만
+      els.btnBatchFastBg.addEventListener('click', async () => {
+        const targets = state.slots
+          .map((s, idx) => ({ s, idx }))
+          .filter(item => item.s.processedCanvas);
+        if (targets.length === 0) {
+          showToast('먼저 사진을 업로드해 주세요.', 'info');
+          return;
+        }
+        els.batchLoadingTitle.textContent = 'AI가 상자 테두리만 인식해 깔끔하게 크롭하고 있습니다...';
+        els.batchLoadingOverlay.classList.remove('hidden');
+        let ok = 0, fail = 0;
+        for (let i = 0; i < targets.length; i++) {
+          const { s, idx } = targets[i];
+          els.batchLoadingSub.textContent = `${i + 1} / ${targets.length} 크롭 중 (#${idx + 1}번)`;
+          try {
+            const res = await cropToBoxOnlyWithAI(s.origCanvas || s.processedCanvas);
+            s.processedCanvas = res;
+            ok++;
+            renderPreview();
+          } catch (err) {
+            console.error(err);
+            fail++;
+          }
+        }
+        els.batchLoadingOverlay.classList.add('hidden');
+        renderSlotGrid();
+        renderPreview();
+        if (fail > 0) {
+          showToast(`${ok}장 크롭 완료, ${fail}장 실패`, 'info');
+        } else {
+          showToast(`${ok}장 모두 상자 형태로 크롭되었습니다!`, 'success');
+        }
+      });
+
+      // 3) 배경 & 장식 컨트롤
+      document.querySelectorAll('.bg-preset-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          state.bgColor = btn.dataset.bg;
+          els.customBgColor.value = state.bgColor;
+          document.querySelectorAll('.bg-preset-btn').forEach(b => {
+            b.classList.remove('border-slate-900');
+            b.classList.add('border-white');
+          });
+          btn.classList.remove('border-white');
+          btn.classList.add('border-slate-900');
+          renderPreview();
+        });
+      });
+
+      els.customBgColor.addEventListener('input', (e) => {
+        state.bgColor = e.target.value;
+        renderPreview();
+      });
+
+      els.chkStar.addEventListener('change', (e) => { state.showStar = e.target.checked; renderPreview(); });
+      els.chkTrunk.addEventListener('change', (e) => { state.showTrunk = e.target.checked; renderPreview(); });
+      els.chkGifts.addEventListener('change', (e) => { state.showGifts = e.target.checked; renderPreview(); });
+      els.chkBoxShadow.addEventListener('change', (e) => { state.showBoxShadow = e.target.checked; renderPreview(); });
+      els.chkShowGuides.addEventListener('change', (e) => { state.showGuides = e.target.checked; renderPreview(); });
+
+      document.querySelectorAll('.deco-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          state.decoStyle = btn.dataset.deco;
+          document.querySelectorAll('.deco-btn').forEach(b => {
+            const active = b.dataset.deco === state.decoStyle;
+            b.className = `deco-btn py-1.5 rounded-xl text-xs font-bold border ${
+              active
+                ? 'bg-rose-600 text-white border-rose-600'
+                : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'
+            }`;
+          });
+          renderPreview();
+        });
+      });
+
+      els.titleTextInput.addEventListener('input', (e) => { state.titleText = e.target.value; renderPreview(); });
+      els.badgeTextInput.addEventListener('input', (e) => { state.badgeText = e.target.value; renderPreview(); });
+
+      els.rangeOverlapX.addEventListener('input', (e) => {
+        state.overlapX = parseInt(e.target.value, 10);
+        els.overlapXVal.textContent = `${state.overlapX}%`;
+        renderPreview();
+      });
+      els.rangeOverlapY.addEventListener('input', (e) => {
+        state.overlapY = parseInt(e.target.value, 10);
+        els.overlapYVal.textContent = `${state.overlapY}%`;
+        renderPreview();
+      });
+      els.rangeBoxRatio.addEventListener('input', (e) => {
+        state.boxRatio = parseInt(e.target.value, 10);
+        const label = state.boxRatio === 100 ? ' (1:1)' : state.boxRatio < 100 ? ' (가로형)' : ' (세로형)';
+        els.boxRatioVal.textContent = `${state.boxRatio}%${label}`;
+        renderPreview();
+      });
+
+      els.aspectSelect.addEventListener('change', (e) => { state.aspectRatio = e.target.value; renderPreview(); });
+      els.resolutionSelect.addEventListener('change', (e) => { state.exportWidth = parseInt(e.target.value, 10); });
+
+      // 레이어 앞으로 모드 & 자리 바꾸기 모드
+      els.btnFrontMode.addEventListener('click', () => {
+        state.frontMode = !state.frontMode;
+        if (state.frontMode) {
+          state.swapMode = false;
+          state.swapFirstIndex = null;
+          els.swapModeBanner.classList.add('hidden');
+          els.btnSwapMode.classList.remove('bg-amber-100', 'border-amber-400', 'text-amber-900');
+        }
+        els.frontModeBanner.classList.toggle('hidden', !state.frontMode);
+        els.btnFrontMode.classList.toggle('bg-indigo-100', state.frontMode);
+        els.btnFrontMode.classList.toggle('border-indigo-400', state.frontMode);
+        els.btnFrontMode.classList.toggle('text-indigo-900', state.frontMode);
+        renderPreview();
+      });
+
+      els.btnSwapMode.addEventListener('click', () => {
+        state.swapMode = !state.swapMode;
+        state.swapFirstIndex = null;
+        if (state.swapMode) {
+          state.frontMode = false;
+          els.frontModeBanner.classList.add('hidden');
+          els.btnFrontMode.classList.remove('bg-indigo-100', 'border-indigo-400', 'text-indigo-900');
+        }
+        els.swapModeBanner.classList.toggle('hidden', !state.swapMode);
+        els.btnSwapMode.classList.toggle('bg-amber-100', state.swapMode);
+        els.btnSwapMode.classList.toggle('border-amber-400', state.swapMode);
+        els.btnSwapMode.classList.toggle('text-amber-900', state.swapMode);
+        renderPreview();
+      });
+
+      // 다운로드
+      els.btnDownloadTop.addEventListener('click', downloadHighResPNG);
+      els.btnDownloadMain.addEventListener('click', downloadHighResPNG);
+
+      // 미리보기 캔버스 클릭 -> 최상위 zIndex 슬롯 우선 히트 테스트
+      els.previewCanvas.addEventListener('click', (e) => {
+        const rect = els.previewCanvas.getBoundingClientRect();
+        const x = (e.clientX - rect.left) * (els.previewCanvas.width / rect.width);
+        const y = (e.clientY - rect.top) * (els.previewCanvas.height / rect.height);
+
+        const sortedDesc = [...state.renderedSlotRects].sort((a, b) => {
+          const za = state.slots[a.index]?.zIndex || 0;
+          const zb = state.slots[b.index]?.zIndex || 0;
+          if (za !== zb) return zb - za;
+          return b.index - a.index;
+        });
+
+        for (const r of sortedDesc) {
+          if (x >= r.x && x <= r.x + r.w && y >= r.y && y <= r.y + r.h) {
+            onSlotClicked(r.index);
+            return;
+          }
+        }
+      });
+
+      // 4) 편집 모달 이벤트
+      els.btnCloseEditor.addEventListener('click', closeEditorModal);
+
+      document.querySelectorAll('.editor-tool-btn').forEach(btn => {
+        btn.addEventListener('click', () => setEditorTool(btn.dataset.tool));
+      });
+
+      els.rangeWandTol.addEventListener('input', (e) => {
+        editorState.wandTol = parseInt(e.target.value, 10);
+        els.wandTolVal.textContent = editorState.wandTol;
+      });
+      els.rangeBrushSize.addEventListener('input', (e) => {
+        editorState.brushSize = parseInt(e.target.value, 10);
+        els.brushSizeVal.textContent = `${editorState.brushSize}px`;
+      });
+
+      // 편집 캔버스 마우스 & 터치 드래그 (크롭 / 완드 / 지우개 / 복구)
+      const onPointerDown = (e) => {
+        if (!editorState.workCanvas) return;
+        e.preventDefault();
+        const { x, y } = getEditorPointerPos(e);
+
+        if (editorState.tool === 'crop') {
+          const mode = hitTestCropHandle(x, y);
+          editorState.cropDragMode = mode;
+          const q = editorState.cropQuad;
+          editorState.cropDragStart = {
+            x,
+            y,
+            quad: q
+              ? { tl: { ...q.tl }, tr: { ...q.tr }, br: { ...q.br }, bl: { ...q.bl } }
+              : { tl: { x, y }, tr: { x, y }, br: { x, y }, bl: { x, y } },
+          };
+          if (mode === 'new') {
+            editorState.cropQuad = {
+              tl: { x, y }, tr: { x, y }, br: { x, y }, bl: { x, y },
+            };
+          }
+          drawEditorCanvas();
+          return;
+        }
+
+        if (editorState.tool === 'wand') {
+          pushEditorUndo();
+          floodFillErase(editorState.workCanvas, x, y, editorState.wandTol);
+          drawEditorCanvas();
+          return;
+        }
+
+        pushEditorUndo();
+        editorState.isDrawing = true;
+        applyBrushAt(x, y);
+      };
+
+      const onPointerMove = (e) => {
+        if (!editorState.workCanvas) return;
+
+        if (editorState.tool === 'crop' && editorState.cropDragMode && editorState.cropDragStart) {
+          e.preventDefault();
+          const { x, y } = getEditorPointerPos(e);
+          const cw = editorState.workCanvas.width;
+          const ch = editorState.workCanvas.height;
+          const clampX = (v) => Math.max(0, Math.min(cw, v));
+          const clampY = (v) => Math.max(0, Math.min(ch, v));
+          const s = editorState.cropDragStart;
+          const mode = editorState.cropDragMode;
+          const dx = x - s.x;
+          const dy = y - s.y;
+          const q0 = s.quad;
+
+          if (mode === 'new') {
+            const x1 = clampX(Math.min(s.x, x));
+            const y1 = clampY(Math.min(s.y, y));
+            const x2 = clampX(Math.max(s.x, x));
+            const y2 = clampY(Math.max(s.y, y));
+            editorState.cropQuad = {
+              tl: { x: x1, y: y1 },
+              tr: { x: x2, y: y1 },
+              br: { x: x2, y: y2 },
+              bl: { x: x1, y: y2 },
+            };
+          } else if (mode === 'move') {
+            const minX = Math.min(q0.tl.x, q0.tr.x, q0.br.x, q0.bl.x);
+            const maxX = Math.max(q0.tl.x, q0.tr.x, q0.br.x, q0.bl.x);
+            const minY = Math.min(q0.tl.y, q0.tr.y, q0.br.y, q0.bl.y);
+            const maxY = Math.max(q0.tl.y, q0.tr.y, q0.br.y, q0.bl.y);
+            const cdx = Math.max(-minX, Math.min(cw - maxX, dx));
+            const cdy = Math.max(-minY, Math.min(ch - maxY, dy));
+            editorState.cropQuad = {
+              tl: { x: q0.tl.x + cdx, y: q0.tl.y + cdy },
+              tr: { x: q0.tr.x + cdx, y: q0.tr.y + cdy },
+              br: { x: q0.br.x + cdx, y: q0.br.y + cdy },
+              bl: { x: q0.bl.x + cdx, y: q0.bl.y + cdy },
+            };
+          } else if (mode === 'tl' || mode === 'tr' || mode === 'br' || mode === 'bl') {
+            editorState.cropQuad = {
+              tl: { ...q0.tl }, tr: { ...q0.tr }, br: { ...q0.br }, bl: { ...q0.bl },
+              [mode]: { x: clampX(x), y: clampY(y) },
+            };
+          } else if (mode === 'n') {
+            editorState.cropQuad = {
+              tl: { x: q0.tl.x, y: clampY(q0.tl.y + dy) },
+              tr: { x: q0.tr.x, y: clampY(q0.tr.y + dy) },
+              br: { ...q0.br },
+              bl: { ...q0.bl },
+            };
+          } else if (mode === 's') {
+            editorState.cropQuad = {
+              tl: { ...q0.tl },
+              tr: { ...q0.tr },
+              br: { x: q0.br.x, y: clampY(q0.br.y + dy) },
+              bl: { x: q0.bl.x, y: clampY(q0.bl.y + dy) },
+            };
+          } else if (mode === 'w') {
+            editorState.cropQuad = {
+              tl: { x: clampX(q0.tl.x + dx), y: q0.tl.y },
+              tr: { ...q0.tr },
+              br: { ...q0.br },
+              bl: { x: clampX(q0.bl.x + dx), y: q0.bl.y },
+            };
+          } else if (mode === 'e') {
+            editorState.cropQuad = {
+              tl: { ...q0.tl },
+              tr: { x: clampX(q0.tr.x + dx), y: q0.tr.y },
+              br: { x: clampX(q0.br.x + dx), y: q0.br.y },
+              bl: { ...q0.bl },
+            };
+          }
+          drawEditorCanvas();
+          return;
+        }
+
+        if (!editorState.isDrawing) return;
+        e.preventDefault();
+        const { x, y } = getEditorPointerPos(e);
+        applyBrushAt(x, y);
+      };
+
+      const onPointerUp = () => {
+        editorState.isDrawing = false;
+        editorState.cropDragMode = null;
+        editorState.cropDragStart = null;
+      };
+
+      els.editorCanvas.addEventListener('mousedown', onPointerDown);
+      window.addEventListener('mousemove', onPointerMove);
+      window.addEventListener('mouseup', onPointerUp);
+      els.editorCanvas.addEventListener('touchstart', onPointerDown, { passive: false });
+      window.addEventListener('touchmove', onPointerMove, { passive: false });
+      window.addEventListener('touchend', onPointerUp);
+
+      // 수동 크롭 적용 & 초기화
+      els.btnApplyCrop.addEventListener('click', applyCropRect);
+      els.btnResetCropRect.addEventListener('click', () => {
+        resetCropRect();
+        drawEditorCanvas();
+      });
+
+      // 모달 내 AI 박스 크롭 + 발/손 누끼
+      els.btnEditorAiRemove.addEventListener('click', async () => {
+        els.editorAiLoader.classList.remove('hidden');
+        try {
+          pushEditorUndo();
+          const resultCanvas = await removeBackgroundWithGeminiAI(editorState.workCanvas);
+          editorState.workCanvas = resultCanvas;
+          editorState.origCanvas = cloneCanvas(resultCanvas);
+          resetCropRect();
+          drawEditorCanvas();
+          showToast('상자 크롭 및 튀어나온 신체 누끼가 완료되었습니다!', 'success');
+        } catch (err) {
+          console.error(err);
+          showToast(`AI 처리 실패 (${err.message || '오류'}). 빨간 크롭 박스로 직접 잘라주세요.`, 'error');
+        } finally {
+          els.editorAiLoader.classList.add('hidden');
+        }
+      });
+
+      // 모달 내 AI 상자 형태로만 깔끔하게 크롭
+      els.btnEditorAutoCorner.addEventListener('click', async () => {
+        els.editorAiLoader.classList.remove('hidden');
+        try {
+          pushEditorUndo();
+          const resultCanvas = await cropToBoxOnlyWithAI(editorState.workCanvas);
+          editorState.workCanvas = resultCanvas;
+          editorState.origCanvas = cloneCanvas(resultCanvas);
+          resetCropRect();
+          drawEditorCanvas();
+          showToast('상자 형태에 딱 맞게 자동 크롭되었습니다!', 'success');
+        } catch (err) {
+          console.error(err);
+          showToast(`상자 자동 인식 실패 (${err.message || '오류'}). 수동 크롭을 사용해 주세요.`, 'error');
+        } finally {
+          els.editorAiLoader.classList.add('hidden');
+        }
+      });
+
+      // 되돌리기 & 원본 복구
+      els.btnEditorUndo.addEventListener('click', () => {
+        const prev = editorState.undoStack.pop();
+        if (!prev) {
+          showToast('되돌릴 작업이 없습니다.', 'info');
+          return;
+        }
+        editorState.workCanvas = prev.work;
+        editorState.origCanvas = prev.orig;
+        resetCropRect();
+        drawEditorCanvas();
+      });
+
+      els.btnEditorResetBg.addEventListener('click', () => {
+        const slot = state.slots[editorState.slotIndex];
+        if (!slot?.origCanvas) return;
+        pushEditorUndo();
+        editorState.origCanvas = cloneCanvas(slot.origCanvas);
+        editorState.workCanvas = cloneCanvas(slot.origCanvas);
+        resetCropRect();
+        drawEditorCanvas();
+        showToast('원본 사진으로 복구했습니다.', 'info');
+      });
+
+      // 위치/크기/각도 슬라이더
+      els.rangeTScale.addEventListener('input', (e) => {
+        editorState.scale = parseInt(e.target.value, 10);
+        els.tScaleVal.textContent = `${editorState.scale}%`;
+      });
+      els.rangeTOffsetX.addEventListener('input', (e) => {
+        editorState.offsetX = parseInt(e.target.value, 10);
+        els.tOffsetXVal.textContent = `${editorState.offsetX}`;
+      });
+      els.rangeTOffsetY.addEventListener('input', (e) => {
+        editorState.offsetY = parseInt(e.target.value, 10);
+        els.tOffsetYVal.textContent = `${editorState.offsetY}`;
+      });
+      els.rangeTRotate.addEventListener('input', (e) => {
+        editorState.rotate = parseInt(e.target.value, 10);
+        els.tRotateVal.textContent = `${editorState.rotate}°`;
+      });
+
+      els.btnResetTransform.addEventListener('click', () => {
+        editorState.scale = 100;
+        editorState.offsetX = 0;
+        editorState.offsetY = 0;
+        editorState.rotate = 0;
+        els.rangeTScale.value = 100; els.tScaleVal.textContent = '100%';
+        els.rangeTOffsetX.value = 0; els.tOffsetXVal.textContent = '0';
+        els.rangeTOffsetY.value = 0; els.tOffsetYVal.textContent = '0';
+        els.rangeTRotate.value = 0; els.tRotateVal.textContent = '0°';
+      });
+
+      // 모달 내 레이어 맨 앞 / 맨 뒤
+      els.btnEditorBringFront.addEventListener('click', () => {
+        const idx = editorState.slotIndex;
+        if (idx === null) return;
+        state.maxZIndex++;
+        state.slots[idx].zIndex = state.maxZIndex;
+        renderPreview();
+        showToast(`#${idx + 1}번 사진을 맨 앞 레이어로 이동했습니다.`, 'success');
+      });
+      els.btnEditorSendBack.addEventListener('click', () => {
+        const idx = editorState.slotIndex;
+        if (idx === null) return;
+        state.minZIndex--;
+        state.slots[idx].zIndex = state.minZIndex;
+        renderPreview();
+        showToast(`#${idx + 1}번 사진을 맨 뒤 레이어로 이동했습니다.`, 'success');
+      });
+
+      // 사진 교체 / 삭제 / 적용 완료
+      els.btnReplacePhoto.addEventListener('click', () => {
+        const idx = editorState.slotIndex;
+        closeEditorModal();
+        state.activeUploadSlotIndex = idx;
+        els.singleFileInput.value = '';
+        els.singleFileInput.click();
+      });
+
+      els.btnDeletePhoto.addEventListener('click', () => {
+        const idx = editorState.slotIndex;
+        if (idx !== null) {
+          state.slots[idx] = createEmptySlot();
+          renderSlotGrid();
+          renderPreview();
+          showToast(`#${idx + 1}번 사진을 삭제했습니다.`, 'info');
+        }
+        closeEditorModal();
+      });
+
+      els.btnSaveEditor.addEventListener('click', () => {
+        const idx = editorState.slotIndex;
+        if (idx !== null && editorState.workCanvas) {
+          state.slots[idx].processedCanvas = cloneCanvas(editorState.workCanvas);
+          state.slots[idx].scale = editorState.scale;
+          state.slots[idx].offsetX = editorState.offsetX;
+          state.slots[idx].offsetY = editorState.offsetY;
+          state.slots[idx].rotate = editorState.rotate;
+          renderSlotGrid();
+          renderPreview();
+          showToast(`#${idx + 1}번 박스 보정이 적용되었습니다.`, 'success');
+        }
+        closeEditorModal();
+      });
+    }
+
+    // ======================== 10. 초기화 ========================
+    window.addEventListener('DOMContentLoaded', () => {
+      setupEvents();
+      applyPeopleCountAndLayout(22, 'classic');
+    });
+  </script>
+</body>
+</html>
