@@ -74,7 +74,7 @@
             박스트리 스튜디오
           </h1>
           <p class="text-[11px] sm:text-xs text-slate-500 font-medium">
-            인원별 자동 트리 구성 · AI 박스 크롭 &amp; 누끼 · 고해상도 저장
+            인원별 자동 트리 구성 · 반짝이 박스 크롭 · 고해상도 저장
           </p>
         </div>
       </div>
@@ -530,8 +530,6 @@
 
   <script>
     // ======================== 1. 전역 상태 & DOM 참조 ========================
-    const apiKey = ""; // Canvas 런타임에서 자동 주입
-
     const state = {
       peopleCount: 22,
       layoutMode: 'classic', // 'classic' | 'trunk' | 'gifts'
@@ -942,123 +940,6 @@
       }
     }
 
-    // ======================== 5. Gemini AI 박스 크롭 & 누끼 엔진 ========================
-    async function fetchWithRetry(url, options, maxRetries = 4) {
-      let delay = 1000;
-      for (let i = 0; i < maxRetries; i++) {
-        const resp = await fetch(url, options);
-        if (resp.ok) return resp;
-        if (resp.status === 429 || resp.status >= 500) {
-          if (i < maxRetries - 1) {
-            await new Promise(r => setTimeout(r, delay));
-            delay *= 2;
-            continue;
-          }
-        }
-        const errText = await resp.text().catch(() => '');
-        throw new Error(`HTTP ${resp.status} ${errText.slice(0, 120)}`);
-      }
-      throw new Error('네트워크 요청 시간 초과');
-    }
-
-    /**
-     * Gemini Vision(gemini-3-flash-preview)으로 사진에서 반짝이(모루) 테두리의
-     * 정확한 4개 꼭짓점(사다리꼴)과 튀어나온 신체 포함 영역을 동시에 감지합니다.
-     */
-    async function detectBoxAndSubjectWithGemini(sourceCanvas) {
-      const sendCanvas = document.createElement('canvas');
-      const maxSend = 768;
-      const ratio = Math.min(1, maxSend / Math.max(sourceCanvas.width, sourceCanvas.height));
-      sendCanvas.width = Math.round(sourceCanvas.width * ratio);
-      sendCanvas.height = Math.round(sourceCanvas.height * ratio);
-      sendCanvas.getContext('2d').drawImage(sourceCanvas, 0, 0, sendCanvas.width, sendCanvas.height);
-
-      const base64Data = sendCanvas.toDataURL('image/jpeg', 0.9).split(',')[1];
-
-      const prompt = [
-        "Analyze this photo of a person sitting inside a cardboard box decorated with Christmas garland or tinsel (green pine garland, white/silver/gold tinsel, ornaments) around its front frame.",
-        "Return exact pixel coordinates normalized to 0..1000, where x=0 is the LEFT edge, x=1000 is the RIGHT edge, y=0 is the TOP edge, and y=1000 is the BOTTOM edge.",
-        "1. top_left, top_right, bottom_right, bottom_left: The EXACT 4 outer corners of the decorated Christmas garland/tinsel frame of the box itself.",
-        "   - Follow the exact box/trapezoid contour tightly along the outer edge of the green/white/gold garland.",
-        "   - STRICTLY EXCLUDE all classroom background outside the garland (walls, doors, door frames, bulletin boards, shelves, ceiling, floor).",
-        "2. protrude_left_x, protrude_right_x, protrude_bottom_y: Outer bounds (0..1000) if the person's feet, legs, or hands extend outside the garland border (otherwise match the garland corners)."
-      ].join(' ');
-
-      const payload = {
-        contents: [{
-          role: "user",
-          parts: [
-            { text: prompt },
-            { inlineData: { mimeType: "image/jpeg", data: base64Data } }
-          ]
-        }],
-        generationConfig: {
-          responseMimeType: "application/json",
-          responseSchema: {
-            type: "OBJECT",
-            properties: {
-              top_left: {
-                type: "OBJECT",
-                properties: { x: { type: "INTEGER" }, y: { type: "INTEGER" } },
-                required: ["x", "y"]
-              },
-              top_right: {
-                type: "OBJECT",
-                properties: { x: { type: "INTEGER" }, y: { type: "INTEGER" } },
-                required: ["x", "y"]
-              },
-              bottom_right: {
-                type: "OBJECT",
-                properties: { x: { type: "INTEGER" }, y: { type: "INTEGER" } },
-                required: ["x", "y"]
-              },
-              bottom_left: {
-                type: "OBJECT",
-                properties: { x: { type: "INTEGER" }, y: { type: "INTEGER" } },
-                required: ["x", "y"]
-              },
-              protrude_left_x: { type: "INTEGER" },
-              protrude_right_x: { type: "INTEGER" },
-              protrude_bottom_y: { type: "INTEGER" }
-            },
-            required: ["top_left", "top_right", "bottom_right", "bottom_left"]
-          }
-        }
-      };
-
-      const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent?key=${apiKey}`;
-      const response = await fetchWithRetry(apiUrl, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
-      });
-
-      const result = await response.json();
-      let text = result?.candidates?.[0]?.content?.parts?.[0]?.text;
-      if (!text) throw new Error('AI가 상자 가랜드 좌표를 찾지 못했습니다.');
-      text = text.replace(/```json|```/g, '').trim();
-      const parsed = JSON.parse(text);
-
-      const toPt = (obj) => {
-        if (!obj || typeof obj.x !== 'number' || typeof obj.y !== 'number') return null;
-        return {
-          x: Math.max(0, Math.min(sourceCanvas.width, (obj.x / 1000) * sourceCanvas.width)),
-          y: Math.max(0, Math.min(sourceCanvas.height, (obj.y / 1000) * sourceCanvas.height)),
-        };
-      };
-
-      const tl = toPt(parsed.top_left);
-      const tr = toPt(parsed.top_right);
-      const br = toPt(parsed.bottom_right);
-      const bl = toPt(parsed.bottom_left);
-
-      if (!tl || !tr || !br || !bl) {
-        throw new Error('상자 가랜드 4개 모서리를 인식하지 못했습니다.');
-      }
-
-      // 좌우/상하 역전 방지 정렬
-      if (tl.x > tr.x) { const tmp = tl.x; tl.x = tr.x; tr.x = tmp; }
-      if (bl.x > br.x) { const tmp = bl.x; bl.x = br.x; br.x = tmp; }
     // ======================== 5. 로컬 반짝이 박스 자동 감지 & 크롭 엔진 (100% 브라우저 처리) ========================
 
     /**
