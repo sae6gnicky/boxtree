@@ -1,2621 +1,1317 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>박스트리 스튜디오 - 크리스마스 박스 트리 메이커</title>
-  <!-- Tailwind CSS -->
-  <script src="https://cdn.tailwindcss.com"></script>
-  <!-- Google Fonts -->
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@600;700&family=Inter:wght@400;500;600;700&family=Jua&family=Noto+Sans+KR:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
-  <style>
-    body {
-      font-family: 'Noto Sans KR', 'Inter', sans-serif;
-      background-color: #f8fafc;
-      color: #0f172a;
-      -webkit-tap-highlight-color: transparent;
-    }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>🎄 박스트리 만들기</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Jua&family=Noto+Sans+KR:wght@400;700&display=swap" rel="stylesheet">
+<style>
+* { box-sizing: border-box; }
+html, body { margin: 0; height: 100%; }
+body {
+  font-family: 'Noto Sans KR', system-ui, sans-serif;
+  background: #1b1416; color: #f3eaea; font-size: 14px;
+}
+.app { display: flex; height: 100vh; }
+.panel {
+  width: 340px; flex: none; overflow-y: auto; padding: 16px 18px 40px;
+  background: #261b1e; border-right: 1px solid #3c2a2f;
+}
+.panel h1 { font-family: 'Jua', sans-serif; font-weight: 400; font-size: 26px; margin: 4px 0 14px; color: #ffd86b; }
+.panel section { background: #2f2226; border: 1px solid #44323a; border-radius: 12px; padding: 12px 14px; margin-bottom: 12px; }
+.panel h2 { font-size: 14px; margin: 0 0 10px; color: #ffb3b3; }
+.row { display: flex; align-items: center; gap: 8px; margin: 8px 0; flex-wrap: wrap; }
+.row > label { min-width: 64px; color: #d8c8cb; }
+input[type=text], input[type=number], select {
+  background: #1d1517; color: #fff; border: 1px solid #55404a; border-radius: 8px; padding: 6px 8px; font: inherit;
+}
+input[type=text] { flex: 1; min-width: 0; }
+input[type=number] { width: 80px; }
+input[type=range] { width: 100%; accent-color: #e5484d; }
+input[type=color] { width: 36px; height: 30px; border: none; background: none; padding: 0; cursor: pointer; }
+.swatch { width: 24px; height: 24px; border-radius: 50%; border: 2px solid #fff6; cursor: pointer; padding: 0; }
+.slider { margin: 10px 0; }
+.slider label { display: flex; justify-content: space-between; color: #d8c8cb; margin-bottom: 2px; }
+.slider label span { color: #ffd86b; }
+.check { display: inline-flex; align-items: center; gap: 6px; margin: 6px 12px 6px 0; cursor: pointer; user-select: none; }
+.checks { display: flex; flex-wrap: wrap; }
+.hint { color: #a8969a; font-size: 12px; line-height: 1.5; margin: 6px 0; }
+.status { background: #1d1517; border-radius: 8px; padding: 8px 10px; font-size: 12.5px; color: #ffe2a8; margin: 8px 0; line-height: 1.5; white-space: pre-line; }
+.rows-view { display: flex; flex-direction: column; align-items: center; gap: 3px; padding: 10px 0 4px; }
+.rows-view .r { display: flex; gap: 3px; }
+.rows-view .r i { width: 12px; height: 14px; background: #e9c46a; border-radius: 2px; display: block; }
+.rows-view .lbl { margin-top: 6px; color: #ffd86b; font-weight: 700; }
+.btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+  background: #3b2a30; color: #fff; border: 1px solid #5a434c; border-radius: 9px;
+  padding: 8px 12px; font: inherit; cursor: pointer;
+}
+.btn:hover { background: #4a353d; }
+.btn.primary { background: #c8303b; border-color: #e5484d; font-weight: 700; }
+.btn.primary:hover { background: #dc3a46; }
+.btn.danger { background: #5a2329; }
+.btn.block { display: flex; width: 100%; }
+.btn-row { display: flex; gap: 8px; }
 
-    /* 투명 배경 체커보드 패턴 */
-    .checkerboard {
-      background-color: #ffffff;
-      background-image:
-        linear-gradient(45deg, #e2e8f0 25%, transparent 25%),
-        linear-gradient(-45deg, #e2e8f0 25%, transparent 25%),
-        linear-gradient(45deg, transparent 75%, #e2e8f0 75%),
-        linear-gradient(-45deg, transparent 75%, #e2e8f0 75%);
-      background-size: 16px 16px;
-      background-position: 0 0, 0 8px, 8px -8px, -8px 0px;
-    }
+.stage { flex: 1; display: flex; flex-direction: column; align-items: center; padding: 12px; min-width: 0; position: relative; }
+.tips { color: #a8969a; font-size: 12px; margin-bottom: 8px; text-align: center; }
+.canvas-holder { flex: 1; width: 100%; display: flex; align-items: center; justify-content: center; min-height: 0; position: relative; }
+#preview { box-shadow: 0 10px 40px #000a; border-radius: 4px; cursor: pointer; touch-action: none; }
+.drop-overlay {
+  position: absolute; inset: 0; display: none; align-items: center; justify-content: center;
+  background: #e5484d33; border: 3px dashed #ffd86b; border-radius: 12px; font-size: 22px; font-family: 'Jua'; pointer-events: none;
+}
+.drop-overlay.show { display: flex; }
+.sel-bar {
+  display: flex; align-items: center; gap: 8px; flex-wrap: wrap; justify-content: center;
+  background: #2f2226; border: 1px solid #55404a; border-radius: 12px; padding: 8px 12px; margin-top: 10px;
+}
+.sel-bar #selName { color: #ffd86b; max-width: 180px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.hidden { display: none !important; }
 
-    /* 커스텀 스크롤바 */
-    ::-webkit-scrollbar {
-      width: 6px;
-      height: 6px;
-    }
-    ::-webkit-scrollbar-track {
-      background: transparent;
-    }
-    ::-webkit-scrollbar-thumb {
-      background: #cbd5e1;
-      border-radius: 9999px;
-    }
-    ::-webkit-scrollbar-thumb:hover {
-      background: #94a3b8;
-    }
+.modal { position: fixed; inset: 0; background: #000c; display: flex; align-items: center; justify-content: center; z-index: 50; }
+.modal-box { background: #261b1e; border: 1px solid #55404a; border-radius: 14px; width: min(1100px, 96vw); height: 94vh; display: flex; flex-direction: column; overflow: hidden; }
+.modal-head { padding: 12px 16px; border-bottom: 1px solid #44323a; }
+.editor-wrap { flex: 1; display: flex; align-items: center; justify-content: center; min-height: 0; padding: 10px; background: #120d0e; }
+#edCanvas { touch-action: none; cursor: crosshair; }
+.modal-foot { display: flex; align-items: center; gap: 8px; padding: 10px 16px; border-top: 1px solid #44323a; flex-wrap: wrap; }
+.spacer { flex: 1; }
 
-    /* 슬라이더 */
-    input[type="range"] {
-      accent-color: #be123c;
-    }
-
-    /* 로딩 스피너 */
-    @keyframes spin {
-      to { transform: rotate(360deg); }
-    }
-    .spinner {
-      animation: spin 0.9s linear infinite;
-    }
-  </style>
+@media (max-width: 800px) {
+  .app { flex-direction: column; height: auto; }
+  .panel { width: 100%; border-right: none; }
+  .stage { height: 90vh; }
+}
+</style>
 </head>
-<body class="min-h-screen flex flex-col">
+<body>
+<div class="app">
+  <aside class="panel">
+    <h1>🎄 박스트리 만들기</h1>
 
-  <!-- 상단 헤더 -->
-  <header class="sticky top-0 z-30 bg-white/90 backdrop-blur-md border-b border-slate-200 px-4 sm:px-6 py-3">
-    <div class="max-w-[1600px] mx-auto flex flex-wrap items-center justify-between gap-3">
-      <div class="flex items-center gap-2.5">
-        <div class="w-9 h-9 rounded-xl bg-gradient-to-br from-rose-600 to-red-800 flex items-center justify-center text-white shadow-sm text-lg">
-          🎄
-        </div>
-        <div>
-          <h1 class="text-base sm:text-lg font-extrabold tracking-tight text-slate-900 leading-tight">
-            박스트리 스튜디오
-          </h1>
-          <p class="text-[11px] sm:text-xs text-slate-500 font-medium">
-            인원별 자동 트리 구성 · 반짝이 박스 크롭 · 고해상도 저장
-          </p>
-        </div>
+    <section>
+      <h2>1. 인원 &amp; 트리 배치</h2>
+      <div class="row">
+        <label for="peopleNum">참여 인원</label>
+        <input type="number" id="peopleNum" min="1" max="100" value="18">
+        <span>명</span>
       </div>
-
-      <div class="flex items-center gap-2">
-        <button id="btnFrontMode" type="button"
-          class="px-3 py-2 rounded-xl text-xs sm:text-sm font-semibold border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 transition flex items-center gap-1.5">
-          <span>⬆️</span>
-          <span>레이어 앞으로</span>
-        </button>
-        <button id="btnSwapMode" type="button"
-          class="px-3 py-2 rounded-xl text-xs sm:text-sm font-semibold border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 transition flex items-center gap-1.5">
-          <span>⇄</span>
-          <span>자리 바꾸기</span>
-        </button>
-        <button id="btnDownloadTop" type="button"
-          class="px-4 py-2 rounded-xl text-xs sm:text-sm font-bold bg-gradient-to-r from-rose-600 to-red-700 text-white hover:from-rose-700 hover:to-red-800 shadow-sm hover:shadow transition flex items-center gap-1.5">
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M7 10l5 5m0 0l5-5m-5 5V3" />
-          </svg>
-          <span>고해상도 저장</span>
-        </button>
+      <input type="range" id="peopleRange" min="1" max="60" value="18">
+      <div class="rows-view" id="rowsView"></div>
+      <div class="row">
+        <label for="rowsOverride">직접 지정</label>
+        <input type="text" id="rowsOverride" placeholder="예: 1,2,3,5,7 (비우면 자동)">
       </div>
-    </div>
-  </header>
+      <div class="hint" id="rowsHint"></div>
+    </section>
 
-  <!-- 메인 작업 공간 -->
-  <main class="flex-1 max-w-[1600px] w-full mx-auto p-3 sm:p-5 grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
-
-    <!-- 왼쪽 컨트롤 패널 -->
-    <aside class="lg:col-span-4 xl:col-span-4 space-y-4 order-2 lg:order-1">
-
-      <!-- 1. 인원 수 & 트리 구성 -->
-      <section class="bg-white rounded-2xl border border-slate-200 shadow-sm p-4 space-y-3.5">
-        <div class="flex items-center justify-between">
-          <h2 class="text-sm font-bold text-slate-800 flex items-center gap-1.5">
-            <span class="w-5 h-5 rounded-full bg-rose-100 text-rose-700 text-xs flex items-center justify-center font-extrabold">1</span>
-            인원 수 &amp; 트리 모양 설정
-          </h2>
-          <span id="layoutSummaryBadge" class="text-[11px] font-semibold px-2.5 py-0.5 rounded-full bg-rose-50 text-rose-700 border border-rose-100">
-            총 22명 (1-2-3-4-5-7)
-          </span>
-        </div>
-
-        <!-- 인원 수 입력 스테퍼 -->
-        <div class="flex items-center gap-2">
-          <label for="peopleCountInput" class="text-xs font-semibold text-slate-600 shrink-0">참여 인원</label>
-          <div class="flex items-center flex-1 bg-slate-50 border border-slate-200 rounded-xl p-1">
-            <button id="btnDecreaseCount" type="button"
-              class="w-9 h-9 rounded-lg bg-white border border-slate-200 text-slate-700 font-bold hover:bg-slate-100 active:scale-95 transition">−</button>
-            <input id="peopleCountInput" type="number" min="1" max="50" value="22"
-              class="w-full text-center bg-transparent font-extrabold text-base text-slate-900 focus:outline-none" />
-            <button id="btnIncreaseCount" type="button"
-              class="w-9 h-9 rounded-lg bg-white border border-slate-200 text-slate-700 font-bold hover:bg-slate-100 active:scale-95 transition">+</button>
-          </div>
-          <span class="text-xs text-slate-500 font-medium shrink-0">명</span>
-        </div>
-
-        <!-- 트리 형태 선택 -->
-        <div class="grid grid-cols-3 gap-1.5">
-          <button type="button" data-layout-mode="classic"
-            class="layout-mode-btn py-2 px-2 rounded-xl text-xs font-bold border transition text-center bg-rose-600 text-white border-rose-600">
-            삼각형 트리
-          </button>
-          <button type="button" data-layout-mode="trunk"
-            class="layout-mode-btn py-2 px-2 rounded-xl text-xs font-bold border transition text-center bg-white text-slate-600 border-slate-200 hover:bg-slate-50">
-            기둥 포함형
-          </button>
-          <button type="button" data-layout-mode="gifts"
-            class="layout-mode-btn py-2 px-2 rounded-xl text-xs font-bold border transition text-center bg-white text-slate-600 border-slate-200 hover:bg-slate-50">
-            기둥+선물형
-          </button>
-        </div>
-
-        <!-- 직접 행 배열 편집 -->
-        <div class="pt-1">
-          <div class="flex items-center justify-between mb-1">
-            <label for="customRowsInput" class="text-[11px] font-semibold text-slate-500">
-              층별 인원 직접 조정 (쉼표로 구분)
-            </label>
-            <button id="btnApplyCustomRows" type="button"
-              class="text-[11px] font-bold text-rose-600 hover:text-rose-700">적용</button>
-          </div>
-          <input id="customRowsInput" type="text" value="1, 2, 3, 4, 5, 7"
-            placeholder="예: 1, 2, 3, 4, 5, 7"
-            class="w-full px-3 py-2 text-xs font-medium bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-rose-500/30 focus:border-rose-500" />
-        </div>
-      </section>
-
-      <!-- 2. 사진 업로드 & 배경 제거 -->
-      <section class="bg-white rounded-2xl border border-slate-200 shadow-sm p-4 space-y-3.5">
-        <div class="flex items-center justify-between">
-          <h2 class="text-sm font-bold text-slate-800 flex items-center gap-1.5">
-            <span class="w-5 h-5 rounded-full bg-rose-100 text-rose-700 text-xs flex items-center justify-center font-extrabold">2</span>
-            사진 업로드 &amp; 박스 크롭
-          </h2>
-          <span id="uploadProgressText" class="text-xs font-bold text-slate-500">0 / 22장</span>
-        </div>
-
-        <!-- 일괄 업로드 드롭존 -->
-        <label for="batchFileInput" id="dropZone"
-          class="block border-2 border-dashed border-rose-200 hover:border-rose-400 bg-rose-50/50 hover:bg-rose-50 rounded-2xl p-4 text-center cursor-pointer transition">
-          <input id="batchFileInput" type="file" accept="image/*" multiple class="hidden" />
-          <div class="text-2xl mb-1">📸</div>
-          <p class="text-xs sm:text-sm font-bold text-rose-700">사진 여러 장 한꺼번에 올리기</p>
-          <p class="text-[11px] text-slate-500 mt-0.5">클릭하거나 파일을 끌어다 놓으면 빈 칸부터 차례로 채워집니다</p>
-        </label>
-
-        <!-- 일괄 처리 버튼 -->
-        <div class="grid grid-cols-2 gap-2">
-          <button id="btnBatchFastBg" type="button"
-            class="py-2.5 px-2.5 rounded-xl text-xs font-bold bg-gradient-to-r from-rose-600 to-red-600 hover:from-rose-700 hover:to-red-700 text-white shadow-sm transition flex items-center justify-center gap-1 disabled:opacity-50">
-            <span>✂️</span>
-            <span>자동 반짝이 크롭 (일괄)</span>
-          </button>
-          <button id="btnBatchAiBg" type="button"
-            class="py-2.5 px-2.5 rounded-xl text-xs font-bold bg-slate-800 hover:bg-slate-900 text-white shadow-sm transition flex items-center justify-center gap-1 disabled:opacity-50">
-            <span>🪄</span>
-            <span>외곽 배경 정리 (일괄)</span>
-          </button>
-        </div>
-
-        <div class="flex items-center justify-between gap-2 text-[11px] text-slate-500 bg-slate-50 rounded-xl px-3 py-2 border border-slate-100">
-          <span>💡 1번 사진에서 <b>4점 크롭</b>을 맞춘 뒤 <b>전체 일괄 적용</b>도 가능합니다.</span>
-          <button id="btnClearAllPhotos" type="button" class="text-rose-600 font-bold shrink-0 hover:underline">전체 비우기</button>
-        </div>
-
-        <!-- 슬롯 썸네일 그리드 -->
-        <div id="slotGrid" class="grid grid-cols-5 sm:grid-cols-6 lg:grid-cols-5 gap-1.5 max-h-56 overflow-y-auto pr-1">
-          <!-- JS로 렌더링 -->
-        </div>
-      </section>
-
-      <!-- 3. 배경 & 장식 꾸미기 -->
-      <section class="bg-white rounded-2xl border border-slate-200 shadow-sm p-4 space-y-3.5">
-        <h2 class="text-sm font-bold text-slate-800 flex items-center gap-1.5">
-          <span class="w-5 h-5 rounded-full bg-rose-100 text-rose-700 text-xs flex items-center justify-center font-extrabold">3</span>
-          배경 &amp; 크리스마스 장식
-        </h2>
-
-        <!-- 배경 테마 프리셋 -->
-        <div>
-          <label class="text-[11px] font-semibold text-slate-500 block mb-1.5">배경 색상 테마</label>
-          <div class="flex items-center gap-2 flex-wrap">
-            <button type="button" data-bg="#9B232B" title="클래식 버건디" class="bg-preset-btn w-8 h-8 rounded-full border-2 border-slate-900 shadow-sm" style="background:#9B232B;"></button>
-            <button type="button" data-bg="#D6131E" title="산타 레드" class="bg-preset-btn w-8 h-8 rounded-full border-2 border-white shadow-sm ring-1 ring-slate-200" style="background:#D6131E;"></button>
-            <button type="button" data-bg="#14452F" title="포레스트 그린" class="bg-preset-btn w-8 h-8 rounded-full border-2 border-white shadow-sm ring-1 ring-slate-200" style="background:#14452F;"></button>
-            <button type="button" data-bg="#172554" title="미드나잇 네이비" class="bg-preset-btn w-8 h-8 rounded-full border-2 border-white shadow-sm ring-1 ring-slate-200" style="background:#172554;"></button>
-            <button type="button" data-bg="#27272A" title="모던 차콜" class="bg-preset-btn w-8 h-8 rounded-full border-2 border-white shadow-sm ring-1 ring-slate-200" style="background:#27272A;"></button>
-            <button type="button" data-bg="#FDF6EC" title="웜 크림" class="bg-preset-btn w-8 h-8 rounded-full border-2 border-white shadow-sm ring-1 ring-slate-200" style="background:#FDF6EC;"></button>
-            <label class="w-8 h-8 rounded-full border border-slate-300 flex items-center justify-center cursor-pointer bg-white text-xs font-bold text-slate-600 hover:bg-slate-50" title="직접 색상 선택">
-              <span>+</span>
-              <input id="customBgColor" type="color" value="#9B232B" class="sr-only" />
-            </label>
-          </div>
-        </div>
-
-        <!-- 장식 요소 토글 -->
-        <div class="grid grid-cols-2 gap-2 text-xs font-semibold text-slate-700">
-          <label class="flex items-center gap-2 bg-slate-50 px-3 py-2 rounded-xl border border-slate-200 cursor-pointer">
-            <input id="chkStar" type="checkbox" checked class="rounded text-rose-600 focus:ring-rose-500" />
-            <span>⭐ 상단 왕별</span>
-          </label>
-          <label class="flex items-center gap-2 bg-slate-50 px-3 py-2 rounded-xl border border-slate-200 cursor-pointer">
-            <input id="chkTrunk" type="checkbox" checked class="rounded text-rose-600 focus:ring-rose-500" />
-            <span>🪵 나무 기둥</span>
-          </label>
-          <label class="flex items-center gap-2 bg-slate-50 px-3 py-2 rounded-xl border border-slate-200 cursor-pointer">
-            <input id="chkGifts" type="checkbox" checked class="rounded text-rose-600 focus:ring-rose-500" />
-            <span>🎁 하단 선물상자</span>
-          </label>
-          <label class="flex items-center gap-2 bg-slate-50 px-3 py-2 rounded-xl border border-slate-200 cursor-pointer">
-            <input id="chkBoxShadow" type="checkbox" checked class="rounded text-rose-600 focus:ring-rose-500" />
-            <span>✨ 박스 입체 그림자</span>
-          </label>
-        </div>
-
-        <!-- 배경 패턴 선택 -->
-        <div>
-          <label class="text-[11px] font-semibold text-slate-500 block mb-1.5">배경 파티 장식</label>
-          <div class="grid grid-cols-3 gap-1.5">
-            <button type="button" data-deco="confetti" class="deco-btn py-1.5 rounded-xl text-xs font-bold border bg-rose-600 text-white border-rose-600">컨페티 &amp; 반짝이</button>
-            <button type="button" data-deco="snow" class="deco-btn py-1.5 rounded-xl text-xs font-bold border bg-white text-slate-600 border-slate-200 hover:bg-slate-50">눈송이 &amp; 별빛</button>
-            <button type="button" data-deco="none" class="deco-btn py-1.5 rounded-xl text-xs font-bold border bg-white text-slate-600 border-slate-200 hover:bg-slate-50">깔끔하게 없음</button>
-          </div>
-        </div>
-
-        <!-- 문구 입력 -->
-        <div class="grid grid-cols-2 gap-2">
-          <div>
-            <label for="titleTextInput" class="text-[11px] font-semibold text-slate-500 block mb-1">좌측 상단 문구</label>
-            <input id="titleTextInput" type="text" value="" placeholder="예: MERRY CHRISTMAS"
-              class="w-full px-2.5 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:border-rose-500" />
-          </div>
-          <div>
-            <label for="badgeTextInput" class="text-[11px] font-semibold text-slate-500 block mb-1">우측 상단 소속/학급</label>
-            <input id="badgeTextInput" type="text" value="" placeholder="예: 3학년 2반"
-              class="w-full px-2.5 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:border-rose-500" />
-          </div>
-        </div>
-
-        <!-- 박스 간격/겹침/비율 미세 조정 -->
-        <div class="space-y-2 pt-1 border-t border-slate-100">
-          <div>
-            <div class="flex justify-between text-[11px] font-semibold text-slate-600 mb-0.5">
-              <span>박스 가로 밀착도 (겹침)</span>
-              <span id="overlapXVal">8%</span>
-            </div>
-            <input id="rangeOverlapX" type="range" min="-15" max="28" value="8" class="w-full" />
-          </div>
-          <div>
-            <div class="flex justify-between text-[11px] font-semibold text-slate-600 mb-0.5">
-              <span>박스 세로 밀착도 (겹침)</span>
-              <span id="overlapYVal">10%</span>
-            </div>
-            <input id="rangeOverlapY" type="range" min="-15" max="28" value="10" class="w-full" />
-          </div>
-          <div>
-            <div class="flex justify-between text-[11px] font-semibold text-slate-600 mb-0.5">
-              <span>박스 가로세로 비율</span>
-              <span id="boxRatioVal">100% (1:1)</span>
-            </div>
-            <input id="rangeBoxRatio" type="range" min="70" max="140" value="100" class="w-full" />
-          </div>
-        </div>
-      </section>
-
-      <!-- 4. 고해상도 저장 설정 -->
-      <section class="bg-white rounded-2xl border border-slate-200 shadow-sm p-4 space-y-3">
-        <h2 class="text-sm font-bold text-slate-800 flex items-center gap-1.5">
-          <span class="w-5 h-5 rounded-full bg-rose-100 text-rose-700 text-xs flex items-center justify-center font-extrabold">4</span>
-          고해상도 이미지 저장
-        </h2>
-
-        <div class="grid grid-cols-2 gap-2">
-          <div>
-            <label for="aspectSelect" class="text-[11px] font-semibold text-slate-500 block mb-1">이미지 비율</label>
-            <select id="aspectSelect" class="w-full px-2.5 py-2 text-xs font-semibold bg-slate-50 border border-slate-200 rounded-xl focus:outline-none">
-              <option value="3:4" selected>3:4 포스터 (추천)</option>
-              <option value="9:16">9:16 모바일 / 스토리</option>
-              <option value="4:5">4:5 인스타그램</option>
-              <option value="1:1">1:1 정사각형</option>
-            </select>
-          </div>
-          <div>
-            <label for="resolutionSelect" class="text-[11px] font-semibold text-slate-500 block mb-1">출력 해상도</label>
-            <select id="resolutionSelect" class="w-full px-2.5 py-2 text-xs font-semibold bg-slate-50 border border-slate-200 rounded-xl focus:outline-none">
-              <option value="1800">고화질 (1800px)</option>
-              <option value="2400" selected>초고화질 4K (2400px)</option>
-              <option value="3200">인쇄용 초고해상도 (3200px)</option>
-            </select>
-          </div>
-        </div>
-
-        <button id="btnDownloadMain" type="button"
-          class="w-full py-3 rounded-xl text-sm font-extrabold bg-gradient-to-r from-rose-600 to-red-700 hover:from-rose-700 hover:to-red-800 text-white shadow-md hover:shadow-lg transition flex items-center justify-center gap-2">
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M7 10l5 5m0 0l5-5m-5 5V3" />
-          </svg>
-          <span>완성된 박스트리 PNG 다운로드</span>
-        </button>
-      </section>
-    </aside>
-
-    <!-- 오른쪽 실시간 미리보기 캔버스 영역 -->
-    <section class="lg:col-span-8 xl:col-span-8 order-1 lg:order-2 flex flex-col items-center">
-      <div class="w-full bg-white rounded-2xl border border-slate-200 shadow-sm p-3 sm:p-4 flex flex-col items-center">
-        <!-- 미리보기 상단 바 -->
-        <div class="w-full flex flex-wrap items-center justify-between gap-2 mb-3 pb-2.5 border-b border-slate-100">
-          <div class="flex items-center gap-2">
-            <span class="text-xs font-bold text-slate-700">실시간 트리 미리보기</span>
-            <span id="frontModeBanner" class="hidden text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-indigo-100 text-indigo-800 border border-indigo-200">
-              ⬆️ 레이어 순서 모드: 앞으로 가져올 사진을 클릭하세요
-            </span>
-            <span id="swapModeBanner" class="hidden text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-amber-100 text-amber-800 border border-amber-200">
-              ⇄ 자리 바꾸기 모드: 두 박스를 차례로 클릭하세요
-            </span>
-          </div>
-          <div class="flex items-center gap-3 text-xs">
-            <label class="flex items-center gap-1.5 text-slate-600 font-medium cursor-pointer">
-              <input id="chkShowGuides" type="checkbox" checked class="rounded text-rose-600" />
-              <span>슬롯 번호 표시</span>
-            </label>
-          </div>
-        </div>
-
-        <!-- 캔버스 래퍼 -->
-        <div id="canvasContainer" class="w-full flex items-center justify-center bg-slate-100/80 rounded-xl p-2 sm:p-4 overflow-hidden relative">
-          <canvas id="previewCanvas" class="max-w-full max-h-[76vh] w-auto h-auto rounded-xl shadow-xl cursor-pointer transition-transform"></canvas>
-
-          <!-- 일괄 처리 오버레이 -->
-          <div id="batchLoadingOverlay" class="hidden absolute inset-0 bg-slate-900/60 backdrop-blur-sm rounded-xl flex flex-col items-center justify-center text-white p-6 text-center z-20">
-            <div class="w-11 h-11 border-4 border-white/30 border-t-white rounded-full spinner mb-3"></div>
-            <p id="batchLoadingTitle" class="text-sm sm:text-base font-bold">AI가 상자 영역을 인식해 크롭하고 있습니다...</p>
-            <p id="batchLoadingSub" class="text-xs text-slate-200 mt-1">1 / 10 처리 중</p>
-          </div>
-        </div>
-
-        <p class="text-[11px] text-slate-400 mt-2.5 text-center">
-          빈 박스를 클릭하면 사진을 바로 올릴 수 있고, 사진이 들어있는 박스를 클릭하면 박스 크롭 및 보정 창이 열립니다.
-        </p>
+    <section>
+      <h2>2. 사진 업로드</h2>
+      <label class="btn primary block" for="fileInput">📷 사진 여러 장 차례대로 올리기</label>
+      <input type="file" id="fileInput" accept="image/*" multiple hidden>
+      <input type="file" id="slotFileInput" accept="image/*" hidden>
+      <label class="check"><input type="checkbox" id="protrude" checked> 튀어나온 손·발 살리기 (AI 누끼)</label>
+      <div class="hint">파일 이름 순서대로 위 칸부터 채워집니다. 반짝이 테두리를 자동 인식해 크롭하며,
+        결과가 어긋나면 사진을 <b>더블클릭</b>해 모서리를 조정하세요.</div>
+      <div class="status" id="status">사진을 올려주세요.</div>
+      <div class="btn-row">
+        <button class="btn" id="clearAll">전체 비우기</button>
       </div>
     </section>
+
+    <section>
+      <h2>3. 박스 크기 &amp; 겹침</h2>
+      <div class="slider">
+        <label>가로 겹침 <span id="oxVal"></span></label>
+        <input type="range" id="ox" min="-20" max="40" value="8">
+      </div>
+      <div class="slider">
+        <label>세로 겹침 <span id="oyVal"></span></label>
+        <input type="range" id="oy" min="-20" max="40" value="5">
+      </div>
+      <div class="slider">
+        <label>박스 세로/가로 비율 <span id="aspVal"></span></label>
+        <input type="range" id="aspect" min="70" max="180" value="125">
+      </div>
+      <label class="check"><input type="checkbox" id="shadow" checked> 박스 그림자</label>
+    </section>
+
+    <section>
+      <h2>4. 트리 꾸미기</h2>
+      <div class="row">
+        <label for="bgColor">배경색</label>
+        <input type="color" id="bgColor" value="#a3243b">
+        <button class="swatch" data-c="#a3243b" style="background:#a3243b" title="버건디"></button>
+        <button class="swatch" data-c="#c8102e" style="background:#c8102e" title="빨강"></button>
+        <button class="swatch" data-c="#1f5135" style="background:#1f5135" title="초록"></button>
+        <button class="swatch" data-c="#16243f" style="background:#16243f" title="남색"></button>
+      </div>
+      <div class="row">
+        <label for="poster">포스터 비율</label>
+        <select id="poster">
+          <option value="1.4142">A4 세로 (인쇄)</option>
+          <option value="1.25">4:5 (SNS)</option>
+          <option value="1.7778">9:16 (휴대폰)</option>
+        </select>
+      </div>
+      <div class="row"><label for="title">제목</label><input type="text" id="title" placeholder="예: Merry Christmas"></div>
+      <div class="row"><label for="subtitle">부제</label><input type="text" id="subtitle" placeholder="예: 3학년 2반"></div>
+      <div class="checks">
+        <label class="check"><input type="checkbox" id="dStar" checked> 왕별</label>
+        <label class="check"><input type="checkbox" id="dTrunk" checked> 나무 기둥</label>
+        <label class="check"><input type="checkbox" id="dGifts" checked> 선물상자</label>
+        <label class="check"><input type="checkbox" id="dSparkle" checked> 반짝이 장식</label>
+      </div>
+    </section>
+
+    <section>
+      <h2>5. 고해상도 저장</h2>
+      <div class="row">
+        <select id="exportSize">
+          <option value="1600">보통 (가로 1600px)</option>
+          <option value="2480" selected>고화질 (가로 2480px · A4 300dpi)</option>
+          <option value="3508">초고화질 (가로 3508px · A3 300dpi)</option>
+        </select>
+        <select id="exportFmt">
+          <option value="png">PNG</option>
+          <option value="jpeg">JPG</option>
+        </select>
+      </div>
+      <button class="btn primary block" id="download">⬇ 이미지 다운로드</button>
+    </section>
+  </aside>
+
+  <main class="stage" id="stage">
+    <div class="tips">클릭: 맨 앞으로 · 드래그: 자리 바꾸기 · 더블클릭: 크롭 편집 · 빈 칸 클릭: 그 칸에 사진 넣기 · Delete: 삭제</div>
+    <div class="canvas-holder" id="holder">
+      <canvas id="preview"></canvas>
+      <div class="drop-overlay" id="dropOverlay">여기에 사진을 놓으세요</div>
+    </div>
+    <div class="sel-bar hidden" id="selBar">
+      <span id="selName"></span>
+      <button class="btn" id="selEdit">✂ 크롭 편집</button>
+      <button class="btn" id="selReplace">🔄 사진 교체</button>
+      <label class="check"><input type="checkbox" id="selProtrude"> 손·발 살리기</label>
+      <button class="btn danger" id="selDelete">🗑 삭제</button>
+    </div>
   </main>
+</div>
 
-  <!-- 단일 슬롯 업로드용 숨김 input -->
-  <input id="singleFileInput" type="file" accept="image/*" class="hidden" />
-
-  <!-- 사진 편집 & 박스 크롭 모달 -->
-  <div id="editorModal" class="hidden fixed inset-0 z-50 bg-slate-900/70 backdrop-blur-sm flex items-center justify-center p-3 sm:p-5">
-    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-4xl max-h-[92vh] flex flex-col overflow-hidden">
-      <!-- 모달 헤더 -->
-      <div class="px-4 sm:px-5 py-3.5 border-b border-slate-200 flex items-center justify-between">
-        <div class="flex items-center gap-2">
-          <span id="editorSlotBadge" class="px-2.5 py-0.5 rounded-full bg-rose-100 text-rose-700 text-xs font-extrabold">#1번 박스</span>
-          <h3 class="text-sm sm:text-base font-bold text-slate-900">박스 크롭 &amp; 배경 보정</h3>
-        </div>
-        <button id="btnCloseEditor" type="button" class="w-8 h-8 rounded-lg hover:bg-slate-100 text-slate-500 font-bold text-lg flex items-center justify-center">✕</button>
-      </div>
-
-      <!-- 모달 바디 -->
-      <div class="flex-1 overflow-y-auto p-4 sm:p-5 grid grid-cols-1 md:grid-cols-12 gap-4">
-        <!-- 편집 캔버스 -->
-        <div class="md:col-span-7 flex flex-col items-center justify-center">
-          <div class="w-full aspect-square max-w-[440px] checkerboard rounded-2xl border border-slate-200 overflow-hidden relative flex items-center justify-center shadow-inner p-1">
-            <canvas id="editorCanvas" class="max-w-full max-h-full w-auto h-auto touch-none cursor-crosshair block"></canvas>
-            <!-- AI 처리 중 로더 -->
-            <div id="editorAiLoader" class="hidden absolute inset-0 bg-slate-900/60 flex flex-col items-center justify-center text-white text-center p-4">
-              <div class="w-9 h-9 border-4 border-white/30 border-t-white rounded-full spinner mb-2.5"></div>
-              <p class="text-xs sm:text-sm font-bold">AI가 상자 영역을 인식해 크롭하고 있습니다...</p>
-              <p class="text-[11px] text-slate-200 mt-1">박스 내부는 100% 보호되고 주변 배경만 정리됩니다</p>
-            </div>
-          </div>
-          <p id="editorToolHint" class="text-[11px] text-slate-500 mt-2 text-center">
-            현재 도구: <b>박스 크롭</b> — 모서리를 드래그해 상자에 맞춘 뒤 [자르기]를 누르세요.
-          </p>
-        </div>
-
-        <!-- 편집 컨트롤 -->
-        <div class="md:col-span-5 space-y-3.5 flex flex-col justify-between">
-          <div class="space-y-3.5">
-            <!-- 원클릭 자동 박스 크롭 -->
-            <div class="space-y-2">
-              <p class="text-xs font-bold text-slate-700">1. 자동 반짝이 크롭 &amp; 전체 일괄 적용</p>
-              <button id="btnEditorAutoCorner" type="button"
-                class="w-full py-2.5 px-3 rounded-xl text-xs font-bold bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-700 hover:to-violet-700 text-white shadow-sm transition flex items-center justify-center gap-1.5">
-                <span>🎯</span>
-                <span>반짝이 테두리 4점 자동 맞추기</span>
-              </button>
-              <button id="btnEditorApplyAllCrop" type="button"
-                class="w-full py-2 px-3 rounded-xl text-xs font-bold bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm transition flex items-center justify-center gap-1.5">
-                <span>📋</span>
-                <span>현재 4점 크롭을 전체 사진에 일괄 적용</span>
-              </button>
-              <button id="btnEditorAiRemove" type="button"
-                class="w-full py-2 px-3 rounded-xl text-xs font-bold bg-slate-800 hover:bg-slate-900 text-white transition flex items-center justify-center gap-1.5">
-                <span>🪄</span>
-                <span>외곽 배경 자동 정리 (박스 내부 보호)</span>
-              </button>
-            </div>
-
-            <!-- 수동 보정 도구 -->
-            <div class="space-y-2 pt-2 border-t border-slate-100">
-              <div class="flex items-center justify-between">
-                <p class="text-xs font-bold text-slate-700">2. 박스 크롭 &amp; 수동 보정</p>
-                <div class="flex gap-1.5">
-                  <button id="btnEditorUndo" type="button" class="text-[11px] font-bold px-2 py-0.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700">되돌리기</button>
-                  <button id="btnEditorResetBg" type="button" class="text-[11px] font-bold px-2 py-0.5 rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-600">원본 복구</button>
-                </div>
-              </div>
-
-              <div class="grid grid-cols-2 sm:grid-cols-4 gap-1.5">
-                <button type="button" data-tool="crop" class="editor-tool-btn py-2 rounded-xl text-xs font-bold border bg-rose-600 text-white border-rose-600">✂️ 박스 크롭</button>
-                <button type="button" data-tool="wand" class="editor-tool-btn py-2 rounded-xl text-xs font-bold border bg-white text-slate-700 border-slate-200 hover:bg-slate-50">🪄 매직완드</button>
-                <button type="button" data-tool="erase" class="editor-tool-btn py-2 rounded-xl text-xs font-bold border bg-white text-slate-700 border-slate-200 hover:bg-slate-50">🧽 지우개</button>
-                <button type="button" data-tool="restore" class="editor-tool-btn py-2 rounded-xl text-xs font-bold border bg-white text-slate-700 border-slate-200 hover:bg-slate-50">🖌️ 복구</button>
-              </div>
-
-              <!-- 크롭 적용 바 -->
-              <div id="cropActionBar" class="flex items-center gap-2 bg-rose-50 border border-rose-200 rounded-xl p-2">
-                <button id="btnApplyCrop" type="button" class="flex-1 py-1.5 px-3 rounded-lg bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold transition shadow-sm">
-                  ✂️ 반짝이 테두리대로 자르기
-                </button>
-                <button id="btnResetCropRect" type="button" class="py-1.5 px-2.5 rounded-lg bg-white border border-rose-200 text-rose-700 text-[11px] font-bold hover:bg-rose-100 transition">
-                  초기화
-                </button>
-              </div>
-
-              <div class="grid grid-cols-2 gap-2.5 pt-1">
-                <div>
-                  <div class="flex justify-between text-[11px] text-slate-600 font-medium">
-                    <span>완드 허용치</span>
-                    <span id="wandTolVal">38</span>
-                  </div>
-                  <input id="rangeWandTol" type="range" min="5" max="100" value="38" class="w-full" />
-                </div>
-                <div>
-                  <div class="flex justify-between text-[11px] text-slate-600 font-medium">
-                    <span>브러시 크기</span>
-                    <span id="brushSizeVal">26px</span>
-                  </div>
-                  <input id="rangeBrushSize" type="range" min="6" max="80" value="26" class="w-full" />
-                </div>
-              </div>
-            </div>
-
-            <!-- 위치/크기/회전 미세 조정 -->
-            <div class="space-y-2 pt-2 border-t border-slate-100">
-              <div class="flex items-center justify-between">
-                <p class="text-xs font-bold text-slate-700">3. 트리 내 크기 &amp; 각도 보정</p>
-                <button id="btnResetTransform" type="button" class="text-[11px] font-semibold text-slate-500 hover:text-slate-700">초기화</button>
-              </div>
-              <div class="space-y-1.5">
-                <div>
-                  <div class="flex justify-between text-[11px] text-slate-600"><span>확대/축소</span><span id="tScaleVal">100%</span></div>
-                  <input id="rangeTScale" type="range" min="60" max="160" value="100" class="w-full" />
-                </div>
-                <div class="grid grid-cols-2 gap-2">
-                  <div>
-                    <div class="flex justify-between text-[11px] text-slate-600"><span>가로 위치</span><span id="tOffsetXVal">0</span></div>
-                    <input id="rangeTOffsetX" type="range" min="-40" max="40" value="0" class="w-full" />
-                  </div>
-                  <div>
-                    <div class="flex justify-between text-[11px] text-slate-600"><span>세로 위치</span><span id="tOffsetYVal">0</span></div>
-                    <input id="rangeTOffsetY" type="range" min="-40" max="40" value="0" class="w-full" />
-                  </div>
-                </div>
-                <div>
-                  <div class="flex justify-between text-[11px] text-slate-600"><span>회전 각도</span><span id="tRotateVal">0°</span></div>
-                  <input id="rangeTRotate" type="range" min="-25" max="25" value="0" class="w-full" />
-                </div>
-                <div class="grid grid-cols-2 gap-1.5 pt-1">
-                  <button id="btnEditorBringFront" type="button" class="py-1.5 rounded-xl text-[11px] font-bold border border-indigo-200 bg-indigo-50 text-indigo-700 hover:bg-indigo-100 transition">⬆️ 맨 앞으로</button>
-                  <button id="btnEditorSendBack" type="button" class="py-1.5 rounded-xl text-[11px] font-bold border border-slate-200 bg-slate-50 text-slate-700 hover:bg-slate-100 transition">⬇️ 맨 뒤로</button>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <!-- 하단 액션 버튼 -->
-          <div class="flex items-center gap-2 pt-3 border-t border-slate-200">
-            <button id="btnReplacePhoto" type="button" class="px-3 py-2.5 rounded-xl text-xs font-bold border border-slate-200 text-slate-700 hover:bg-slate-50">사진 교체</button>
-            <button id="btnDeletePhoto" type="button" class="px-3 py-2.5 rounded-xl text-xs font-bold border border-rose-200 text-rose-600 hover:bg-rose-50">삭제</button>
-            <button id="btnSaveEditor" type="button" class="flex-1 py-2.5 rounded-xl text-xs sm:text-sm font-extrabold bg-rose-600 hover:bg-rose-700 text-white shadow-sm">적용 완료</button>
-          </div>
-        </div>
-      </div>
+<div class="modal hidden" id="editor">
+  <div class="modal-box">
+    <div class="modal-head">✂ 크롭 편집 — 노란 점 4개를 <b>반짝이 테두리 바깥쪽 모서리</b>에 맞춰주세요 (안쪽을 드래그하면 전체 이동)</div>
+    <div class="editor-wrap" id="edWrap"><canvas id="edCanvas"></canvas></div>
+    <div class="modal-foot">
+      <label class="check"><input type="checkbox" id="edProtrude"> 튀어나온 손·발 살리기 (AI 누끼)</label>
+      <button class="btn" id="edAuto">🔍 자동 인식</button>
+      <button class="btn" id="edFull">전체 영역</button>
+      <span class="spacer"></span>
+      <button class="btn" id="edCancel">취소</button>
+      <button class="btn primary" id="edApply">적용</button>
     </div>
   </div>
+</div>
 
-  <!-- 토스트 알림 컨테이너 -->
-  <div id="toastContainer" class="fixed bottom-5 left-1/2 -translate-x-1/2 z-50 flex flex-col gap-2 pointer-events-none"></div>
+<script>
+/* 박스트리 (Box Tree) 웹앱 */
+'use strict';
 
-  <script>
-    // ======================== 1. 전역 상태 & DOM 참조 ========================
-    const state = {
-      peopleCount: 22,
-      layoutMode: 'classic', // 'classic' | 'trunk' | 'gifts'
-      rows: [1, 2, 3, 4, 5, 7],
-      trunkCount: 0,
-      giftCount: 0,
-      slots: [],
-      bgColor: '#9B232B',
-      showStar: true,
-      showTrunk: true,
-      showGifts: true,
-      showBoxShadow: true,
-      decoStyle: 'confetti', // 'confetti' | 'snow' | 'none'
-      titleText: '',
-      badgeText: '',
-      overlapX: 8,
-      overlapY: 10,
-      boxRatio: 100, // 70 ~ 140 (%)
-      aspectRatio: '3:4',
-      exportWidth: 2400,
-      showGuides: true,
-      frontMode: false,
-      swapMode: false,
-      swapFirstIndex: null,
-      activeUploadSlotIndex: null,
-      renderedSlotRects: [],
-      maxZIndex: 1,
-      minZIndex: -1,
-    };
+const $ = (s) => document.querySelector(s);
+const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+const TILE_M = 0.25;          // 박스 바깥 여백(튀어나온 신체용) 비율
+const BOX_W = 720;            // 크롭 결과 박스 가로 해상도(px)
+const SRC_MAX = 1800;         // 원본 사진 최대 변 길이
+const BGR_VERSION = '1.4.5';  // @imgly/background-removal
 
-    const editorState = {
-      slotIndex: null,
-      tool: 'crop', // 'crop' | 'wand' | 'erase' | 'restore'
-      wandTol: 38,
-      brushSize: 26,
-      scale: 100,
-      offsetX: 0,
-      offsetY: 0,
-      rotate: 0,
-      origCanvas: null,
-      workCanvas: null,
-      undoStack: [],
-      isDrawing: false,
-      cropQuad: null, // { tl:{x,y}, tr:{x,y}, br:{x,y}, bl:{x,y} }
-      cropDragMode: null,
-      cropDragStart: null,
-    };
+const state = {
+  n: 18,
+  rowsOverride: null,
+  photos: [],          // 칸 번호(index) → photo 객체 | null
+  ox: 0.08, oy: 0.05, aspect: 1.25,
+  shadow: true,
+  protrude: true,
+  bg: '#a3243b',
+  posterRatio: 1.4142,
+  title: '', subtitle: '',
+  deco: { star: true, trunk: true, gifts: true, sparkles: true },
+  selected: -1,
+};
+let uid = 0, zTop = 1000;
 
-    const els = {
-      btnFrontMode: document.getElementById('btnFrontMode'),
-      btnSwapMode: document.getElementById('btnSwapMode'),
-      btnDownloadTop: document.getElementById('btnDownloadTop'),
-      layoutSummaryBadge: document.getElementById('layoutSummaryBadge'),
-      peopleCountInput: document.getElementById('peopleCountInput'),
-      btnDecreaseCount: document.getElementById('btnDecreaseCount'),
-      btnIncreaseCount: document.getElementById('btnIncreaseCount'),
-      customRowsInput: document.getElementById('customRowsInput'),
-      btnApplyCustomRows: document.getElementById('btnApplyCustomRows'),
-      uploadProgressText: document.getElementById('uploadProgressText'),
-      dropZone: document.getElementById('dropZone'),
-      batchFileInput: document.getElementById('batchFileInput'),
-      btnBatchAiBg: document.getElementById('btnBatchAiBg'),
-      btnBatchFastBg: document.getElementById('btnBatchFastBg'),
-      btnClearAllPhotos: document.getElementById('btnClearAllPhotos'),
-      slotGrid: document.getElementById('slotGrid'),
-      customBgColor: document.getElementById('customBgColor'),
-      chkStar: document.getElementById('chkStar'),
-      chkTrunk: document.getElementById('chkTrunk'),
-      chkGifts: document.getElementById('chkGifts'),
-      chkBoxShadow: document.getElementById('chkBoxShadow'),
-      titleTextInput: document.getElementById('titleTextInput'),
-      badgeTextInput: document.getElementById('badgeTextInput'),
-      overlapXVal: document.getElementById('overlapXVal'),
-      rangeOverlapX: document.getElementById('rangeOverlapX'),
-      overlapYVal: document.getElementById('overlapYVal'),
-      rangeOverlapY: document.getElementById('rangeOverlapY'),
-      boxRatioVal: document.getElementById('boxRatioVal'),
-      rangeBoxRatio: document.getElementById('rangeBoxRatio'),
-      aspectSelect: document.getElementById('aspectSelect'),
-      resolutionSelect: document.getElementById('resolutionSelect'),
-      btnDownloadMain: document.getElementById('btnDownloadMain'),
-      frontModeBanner: document.getElementById('frontModeBanner'),
-      swapModeBanner: document.getElementById('swapModeBanner'),
-      chkShowGuides: document.getElementById('chkShowGuides'),
-      canvasContainer: document.getElementById('canvasContainer'),
-      previewCanvas: document.getElementById('previewCanvas'),
-      batchLoadingOverlay: document.getElementById('batchLoadingOverlay'),
-      batchLoadingTitle: document.getElementById('batchLoadingTitle'),
-      batchLoadingSub: document.getElementById('batchLoadingSub'),
-      singleFileInput: document.getElementById('singleFileInput'),
-      editorModal: document.getElementById('editorModal'),
-      editorSlotBadge: document.getElementById('editorSlotBadge'),
-      btnCloseEditor: document.getElementById('btnCloseEditor'),
-      editorCanvas: document.getElementById('editorCanvas'),
-      editorAiLoader: document.getElementById('editorAiLoader'),
-      editorToolHint: document.getElementById('editorToolHint'),
-      btnEditorAiRemove: document.getElementById('btnEditorAiRemove'),
-      btnEditorAutoCorner: document.getElementById('btnEditorAutoCorner'),
-      btnEditorApplyAllCrop: document.getElementById('btnEditorApplyAllCrop'),
-      btnEditorUndo: document.getElementById('btnEditorUndo'),
-      btnEditorResetBg: document.getElementById('btnEditorResetBg'),
-      cropActionBar: document.getElementById('cropActionBar'),
-      btnApplyCrop: document.getElementById('btnApplyCrop'),
-      btnResetCropRect: document.getElementById('btnResetCropRect'),
-      wandTolVal: document.getElementById('wandTolVal'),
-      rangeWandTol: document.getElementById('rangeWandTol'),
-      brushSizeVal: document.getElementById('brushSizeVal'),
-      rangeBrushSize: document.getElementById('rangeBrushSize'),
-      btnResetTransform: document.getElementById('btnResetTransform'),
-      tScaleVal: document.getElementById('tScaleVal'),
-      rangeTScale: document.getElementById('rangeTScale'),
-      tOffsetXVal: document.getElementById('tOffsetXVal'),
-      rangeTOffsetX: document.getElementById('rangeTOffsetX'),
-      tOffsetYVal: document.getElementById('tOffsetYVal'),
-      rangeTOffsetY: document.getElementById('rangeTOffsetY'),
-      tRotateVal: document.getElementById('tRotateVal'),
-      rangeTRotate: document.getElementById('rangeTRotate'),
-      btnEditorBringFront: document.getElementById('btnEditorBringFront'),
-      btnEditorSendBack: document.getElementById('btnEditorSendBack'),
-      btnReplacePhoto: document.getElementById('btnReplacePhoto'),
-      btnDeletePhoto: document.getElementById('btnDeletePhoto'),
-      btnSaveEditor: document.getElementById('btnSaveEditor'),
-      toastContainer: document.getElementById('toastContainer'),
-    };
-
-    // ======================== 2. 유틸리티 & 토스트 ========================
-    function showToast(message, type = 'info') {
-      const toast = document.createElement('div');
-      const colors = {
-        success: 'bg-emerald-600 text-white',
-        error: 'bg-rose-600 text-white',
-        info: 'bg-slate-900 text-white',
-      };
-      toast.className = `px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold shadow-lg transition-all duration-300 opacity-0 translate-y-2 ${colors[type] || colors.info}`;
-      toast.textContent = message;
-      els.toastContainer.appendChild(toast);
-      requestAnimationFrame(() => {
-        toast.classList.remove('opacity-0', 'translate-y-2');
-      });
-      setTimeout(() => {
-        toast.classList.add('opacity-0', 'translate-y-2');
-        setTimeout(() => toast.remove(), 300);
-      }, 2800);
+/* =========================================================
+ * 1. 인원 수 → 줄 구성 자동 계산
+ * ========================================================= */
+function computeRows(n) {
+  n = clamp(n | 0, 1, 120);
+  if (n === 1) return [1];
+  let best = null, bestScore = Infinity;
+  const rows = [1];
+  const score = (r) => {
+    const k = r.length, W = r[k - 1];
+    let s = Math.abs(W / k - 1.4) * 3;      // 트리다운 가로/세로 균형
+    for (let i = 1; i < k; i++) {
+      const d = r[i] - r[i - 1];
+      if (d === 0) s += 2.5;
+      if (d === 3) s += 1.2;
+      if (i >= 2) { const pd = r[i - 1] - r[i - 2]; if (d < pd) s += (pd - d); } // 아래로 갈수록 넓어지게
     }
-
-    function cloneCanvas(src) {
-      const c = document.createElement('canvas');
-      c.width = src.width;
-      c.height = src.height;
-      c.getContext('2d').drawImage(src, 0, 0);
-      return c;
+    return s;
+  };
+  const dfs = (sum, zeros) => {
+    if (sum === n) {
+      const sc = score(rows);
+      if (sc < bestScore) { bestScore = sc; best = rows.slice(); }
+      return;
     }
-
-    function createEmptySlot() {
-      return {
-        origCanvas: null,
-        processedCanvas: null,
-        scale: 100,
-        offsetX: 0,
-        offsetY: 0,
-        rotate: 0,
-        zIndex: 0,
-      };
+    const last = rows[rows.length - 1];
+    for (let d = 0; d <= 3; d++) {
+      if (d === 0 && zeros >= 1) continue;
+      const nx = last + d;
+      if (sum + nx > n) break;
+      rows.push(nx); dfs(sum + nx, zeros + (d === 0 ? 1 : 0)); rows.pop();
     }
+  };
+  dfs(1, 0);
+  return best || [n];
+}
+let rowsCache = { key: '', rows: [] };
+function getRows() {
+  if (state.rowsOverride && state.rowsOverride.length) return state.rowsOverride;
+  if (rowsCache.key !== state.n) rowsCache = { key: state.n, rows: computeRows(state.n) };
+  return rowsCache.rows;
+}
+const slotCount = () => getRows().reduce((a, b) => a + b, 0);
 
-    // ======================== 3. 인원 수 -> 최적 트리 자동 배치 알고리즘 ========================
-    function computeBestTriangleRows(n) {
-      if (n <= 0) return [1];
-      if (n === 1) return [1];
-      if (n === 2) return [1, 1];
-      if (n === 3) return [1, 2];
+/* =========================================================
+ * 2. 기하 유틸 (호모그래피)
+ * ========================================================= */
+function solveLinear(A, b) {
+  const n = b.length;
+  for (let i = 0; i < n; i++) {
+    let p = i;
+    for (let r = i + 1; r < n; r++) if (Math.abs(A[r][i]) > Math.abs(A[p][i])) p = r;
+    [A[i], A[p]] = [A[p], A[i]]; [b[i], b[p]] = [b[p], b[i]];
+    for (let r = i + 1; r < n; r++) {
+      const f = A[r][i] / A[i][i];
+      for (let c = i; c < n; c++) A[r][c] -= f * A[i][c];
+      b[r] -= f * b[i];
+    }
+  }
+  const x = new Array(n).fill(0);
+  for (let i = n - 1; i >= 0; i--) {
+    let s = b[i];
+    for (let c = i + 1; c < n; c++) s -= A[i][c] * x[c];
+    x[i] = s / A[i][i];
+  }
+  return x;
+}
+// from[i] → to[i] 로 보내는 3x3 행렬 (9개 원소)
+function homography(from, to) {
+  const A = [], b = [];
+  for (let i = 0; i < 4; i++) {
+    const [x, y] = from[i], [u, v] = to[i];
+    A.push([x, y, 1, 0, 0, 0, -u * x, -u * y]); b.push(u);
+    A.push([0, 0, 0, x, y, 1, -v * x, -v * y]); b.push(v);
+  }
+  return [...solveLinear(A, b), 1];
+}
 
-      // 1+2+...+k <= n 인 최대 k 찾기
-      let k = 1;
-      while ((k + 1) * (k + 2) / 2 <= n) {
-        k++;
-      }
-      const rows = [];
-      for (let i = 1; i <= k; i++) rows.push(i);
-      let rem = n - (k * (k + 1)) / 2;
+/* =========================================================
+ * 3. 반짝이(가랜드) 테두리 자동 인식
+ *   - 반짝이는 "밝고 + 잔무늬(엣지)가 촘촘한" 띠 → 텍스처 밀도 맵
+ *   - 가로/세로 프로파일로 네 변의 대략 위치 → 각 변을 직선 피팅
+ *   - 띠의 바깥쪽 경계까지 확장하여 사각형(원근 포함) 반환
+ * ========================================================= */
+function boxBlur(src, w, h, r) {
+  const tmp = new Float32Array(w * h), out = new Float32Array(w * h);
+  for (let y = 0; y < h; y++) {
+    let acc = 0; const o = y * w;
+    for (let x = -r; x <= r; x++) acc += src[o + clamp(x, 0, w - 1)];
+    for (let x = 0; x < w; x++) {
+      tmp[o + x] = acc / (2 * r + 1);
+      acc += src[o + clamp(x + r + 1, 0, w - 1)] - src[o + clamp(x - r, 0, w - 1)];
+    }
+  }
+  for (let x = 0; x < w; x++) {
+    let acc = 0;
+    for (let y = -r; y <= r; y++) acc += tmp[clamp(y, 0, h - 1) * w + x];
+    for (let y = 0; y < h; y++) {
+      out[y * w + x] = acc / (2 * r + 1);
+      acc += tmp[clamp(y + r + 1, 0, h - 1) * w + x] - tmp[clamp(y - r, 0, h - 1) * w + x];
+    }
+  }
+  return out;
+}
+function smooth1d(p, r) {
+  const o = new Float32Array(p.length);
+  for (let i = 0; i < p.length; i++) {
+    let s = 0, c = 0;
+    for (let j = i - r; j <= i + r; j++) if (j >= 0 && j < p.length) { s += p[j]; c++; }
+    o[i] = s / c;
+  }
+  return o;
+}
+function defaultQuad(W, H, inset = 0.06) {
+  return [[W * inset, H * inset], [W * (1 - inset), H * inset], [W * (1 - inset), H * (1 - inset)], [W * inset, H * (1 - inset)]];
+}
+function detectBox(src) {
+  try {
+    const sw = 320, sc = sw / src.width, sh = Math.max(16, Math.round(src.height * sc));
+    const c = document.createElement('canvas'); c.width = sw; c.height = sh;
+    const cx = c.getContext('2d', { willReadFrequently: true });
+    cx.drawImage(src, 0, 0, sw, sh);
+    const d = cx.getImageData(0, 0, sw, sh).data;
+    const N = sw * sh, L = new Float32Array(N), S = new Float32Array(N);
+    for (let i = 0; i < N; i++) L[i] = (0.299 * d[i * 4] + 0.587 * d[i * 4 + 1] + 0.114 * d[i * 4 + 2]) / 255;
+    for (let y = 1; y < sh - 1; y++) for (let x = 1; x < sw - 1; x++) {
+      const i = y * sw + x;
+      const gx = (L[i - sw + 1] + 2 * L[i + 1] + L[i + sw + 1]) - (L[i - sw - 1] + 2 * L[i - 1] + L[i + sw - 1]);
+      const gy = (L[i + sw - 1] + 2 * L[i + sw] + L[i + sw + 1]) - (L[i - sw - 1] + 2 * L[i - sw] + L[i - sw + 1]);
+      const bright = clamp((L[i] - 0.3) / 0.4, 0, 1);
+      S[i] = Math.hypot(gx, gy) * (0.25 + 0.75 * bright);
+    }
+    const D = boxBlur(S, sw, sh, 3);
 
-      if (rem === 0) return rows;
+    const colProf = (y0, y1) => {
+      y0 = clamp(Math.round(y0), 0, sh - 1); y1 = clamp(Math.round(y1), y0 + 1, sh);
+      const p = new Float32Array(sw);
+      for (let y = y0; y < y1; y++) { const o = y * sw; for (let x = 0; x < sw; x++) p[x] += D[o + x]; }
+      for (let x = 0; x < sw; x++) p[x] /= (y1 - y0);
+      return smooth1d(p, 2);
+    };
+    const rowProf = (x0, x1) => {
+      x0 = clamp(Math.round(x0), 0, sw - 1); x1 = clamp(Math.round(x1), x0 + 1, sw);
+      const p = new Float32Array(sh);
+      for (let y = 0; y < sh; y++) { const o = y * sw; let s = 0; for (let x = x0; x < x1; x++) s += D[o + x]; p[y] = s / (x1 - x0); }
+      return smooth1d(p, 2);
+    };
+    const argmax = (p, a, b) => {
+      a = Math.round(a); b = Math.round(b); let bi = a;
+      for (let i = a; i <= b; i++) if (p[i] > p[bi]) bi = i;
+      return bi;
+    };
+    let T = 0, B = sh, Lx = 0, R = sw - 1, cp, rp;
+    for (let it = 0; it < 3; it++) {
+      cp = colProf(T, B);
+      Lx = argmax(cp, sw * 0.02, sw * 0.45); R = argmax(cp, sw * 0.55, sw * 0.98);
+      rp = rowProf(Lx, R + 1);
+      T = argmax(rp, sh * 0.02, sh * 0.45); B = argmax(rp, sh * 0.55, sh * 0.98);
+    }
+    cp = colProf(T, B); rp = rowProf(Lx, R + 1);
+    const median = (p) => { const a = Array.from(p).sort((x, y) => x - y); return a[a.length >> 1]; };
+    const outer = (p, peak, dir, maxOff) => {
+      const base = median(p), thr = base + 0.4 * (p[peak] - base);
+      let i = peak, steps = 0;
+      while (i + dir >= 0 && i + dir < p.length && p[i + dir] > thr && steps < maxOff) { i += dir; steps++; }
+      return steps;
+    };
+    const offL = outer(cp, Lx, -1, sw * 0.08), offR = outer(cp, R, 1, sw * 0.08);
+    const offT = outer(rp, T, -1, sh * 0.08), offB = outer(rp, B, 1, sh * 0.08);
 
-      // 남은 인원을 아래층부터 균형 있게 분배 (예: 18명 -> 1, 2, 3, 5, 7 / 22명 -> 1, 2, 3, 4, 5, 7)
-      let step = 0;
-      while (rem > 0) {
-        if (step % 2 === 0) {
-          // 짝수 스텝: 맨 아래층 확장 (단, 바로 윗층과 3 이상 벌어지면 윗층 보완)
-          if (k >= 2 && rows[k - 1] - rows[k - 2] >= 3) {
-            rows[k - 2]++;
-          } else {
-            rows[k - 1]++;
-          }
-        } else {
-          // 홀수 스텝: 꼭대기(1층)를 제외하고 아래층부터 엄격 증가 조건을 유지하며 확장
-          let placed = false;
-          for (let i = k - 2; i >= 1; i--) {
-            if (rows[i] + 1 < rows[i + 1]) {
-              rows[i]++;
-              placed = true;
-              break;
-            }
-          }
-          if (!placed) {
-            rows[k - 1]++;
-          }
+    // 각 변을 직선으로 피팅 (기울어진 사진 대응)
+    const fitSide = (vertical, center, a0, a1, band) => {
+      const pts = [];
+      for (let t = Math.round(a0); t <= Math.round(a1); t++) {
+        let bp = -1, bv = -1;
+        for (let s = Math.round(center - band); s <= Math.round(center + band); s++) {
+          const x = vertical ? s : t, y = vertical ? t : s;
+          if (x < 0 || y < 0 || x >= sw || y >= sh) continue;
+          const v = D[y * sw + x];
+          if (v > bv) { bv = v; bp = s; }
         }
-        rem--;
-        step++;
+        if (bp >= 0) pts.push([t, bp]);
       }
-
-      return rows;
-    }
-
-    function applyPeopleCountAndLayout(count, mode) {
-      const clamped = Math.max(1, Math.min(50, parseInt(count, 10) || 1));
-      state.peopleCount = clamped;
-      state.layoutMode = mode;
-      els.peopleCountInput.value = clamped;
-
-      let treeCount = clamped;
-      let trunkCount = 0;
-      let giftCount = 0;
-
-      if (mode === 'trunk' && clamped >= 4) {
-        trunkCount = 1;
-        treeCount = clamped - 1;
-      } else if (mode === 'gifts' && clamped >= 6) {
-        trunkCount = 1;
-        giftCount = 2;
-        treeCount = clamped - 3;
+      const fit = (ps) => {
+        const n = ps.length; if (n < 4) return null;
+        let st = 0, sp = 0, stt = 0, stp = 0;
+        for (const [t, p] of ps) { st += t; sp += p; stt += t * t; stp += t * p; }
+        const den = n * stt - st * st; if (Math.abs(den) < 1e-9) return null;
+        const m = (n * stp - st * sp) / den; return { m, q: (sp - m * st) / n };
+      };
+      let f = fit(pts);
+      if (f) {
+        const res = pts.map(([t, p]) => Math.abs(p - (f.m * t + f.q)));
+        const mad = Math.max(2, median(res));
+        const f2 = fit(pts.filter((_, i) => res[i] <= 1.5 * mad)); if (f2) f = f2;
       }
-
-      state.rows = computeBestTriangleRows(treeCount);
-      state.trunkCount = trunkCount;
-      state.giftCount = giftCount;
-
-      syncSlotsToTotalCount();
-      updateLayoutUI();
-      renderSlotGrid();
-      renderPreview();
+      if (!f || Math.abs(f.m) > 0.2) f = { m: 0, q: center };
+      return f;
+    };
+    const bh = B - T, bw = R - Lx;
+    const fl = fitSide(true, Lx, T + bh * 0.15, B - bh * 0.15, sw * 0.05);
+    const fr = fitSide(true, R, T + bh * 0.15, B - bh * 0.15, sw * 0.05);
+    const ft = fitSide(false, T, Lx + bw * 0.15, R - bw * 0.15, sh * 0.05);
+    const fb = fitSide(false, B, Lx + bw * 0.15, R - bw * 0.15, sh * 0.05);
+    fl.q -= offL; fr.q += offR; ft.q -= offT; fb.q += offB;
+    // 교점: x = a*y + b (세로변), y = c*x + d (가로변)
+    const meet = (v, h) => { const x = (v.m * h.q + v.q) / (1 - v.m * h.m); return [x, h.m * x + h.q]; };
+    let q = [meet(fl, ft), meet(fr, ft), meet(fr, fb), meet(fl, fb)]
+      .map(([x, y]) => [clamp(x / sc, 0, src.width), clamp(y / sc, 0, src.height)]);
+    // 타당성 검사
+    const area = Math.abs(q.reduce((s, p, i) => { const n2 = q[(i + 1) % 4]; return s + p[0] * n2[1] - n2[0] * p[1]; }, 0)) / 2;
+    const ratio = area / (src.width * src.height);
+    if (!(ratio > 0.12 && ratio <= 1.0) || q.some((p) => !isFinite(p[0]) || !isFinite(p[1]))) {
+      return defaultQuad(src.width, src.height);
     }
+    return q;
+  } catch (e) {
+    console.warn('detectBox 실패', e);
+    return defaultQuad(src.width, src.height);
+  }
+}
 
-    function syncSlotsToTotalCount() {
-      const total = getTotalSlotCount();
-      while (state.slots.length < total) {
-        state.slots.push(createEmptySlot());
+/* =========================================================
+ * 4. 크롭(원근 보정) + 튀어나온 부분 누끼 합성 → 타일 이미지
+ * ========================================================= */
+function buildTile(p) {
+  const src = p.src, sw = src.width, sh = src.height;
+  const sdata = src.getContext('2d', { willReadFrequently: true }).getImageData(0, 0, sw, sh).data;
+  const q = p.quad;
+  const dist = (a, b) => Math.hypot(a[0] - b[0], a[1] - b[1]);
+  const wq = (dist(q[0], q[1]) + dist(q[3], q[2])) / 2, hq = (dist(q[0], q[3]) + dist(q[1], q[2])) / 2;
+  const bw = BOX_W, bh = Math.round(BOX_W * clamp(hq / wq, 0.6, 2.2));
+  const mx = Math.round(bw * TILE_M), my = Math.round(bh * TILE_M);
+  const ow = bw + 2 * mx, oh = bh + 2 * my;
+  const H = homography([[0, 0], [bw, 0], [bw, bh], [0, bh]], q);
+  const useMask = !!(p.protrude && p.mask);
+  const mask = p.mask;
+  const out = new ImageData(ow, oh), o = out.data;
+  for (let py = 0; py < oh; py++) {
+    const v = py - my + 0.5;
+    for (let px = 0; px < ow; px++) {
+      const u = px - mx + 0.5;
+      const inside = u >= 0 && u < bw && v >= 0 && v < bh;
+      if (!inside && !useMask) continue;
+      const den = H[6] * u + H[7] * v + 1;
+      if (den <= 0) continue;
+      const sx = (H[0] * u + H[1] * v + H[2]) / den - 0.5;
+      const sy = (H[3] * u + H[4] * v + H[5]) / den - 0.5;
+      if (sx < 0 || sy < 0 || sx > sw - 1 || sy > sh - 1) continue;
+      const x0 = sx | 0, y0 = sy | 0, x1 = Math.min(x0 + 1, sw - 1), y1 = Math.min(y0 + 1, sh - 1);
+      const fx = sx - x0, fy = sy - y0;
+      const w00 = (1 - fx) * (1 - fy), w10 = fx * (1 - fy), w01 = (1 - fx) * fy, w11 = fx * fy;
+      const i00 = y0 * sw + x0, i10 = y0 * sw + x1, i01 = y1 * sw + x0, i11 = y1 * sw + x1;
+      const oi = (py * ow + px) * 4;
+      for (let c = 0; c < 3; c++) {
+        o[oi + c] = sdata[i00 * 4 + c] * w00 + sdata[i10 * 4 + c] * w10 + sdata[i01 * 4 + c] * w01 + sdata[i11 * 4 + c] * w11;
       }
-      if (state.slots.length > total) {
-        state.slots = state.slots.slice(0, total);
-      }
+      o[oi + 3] = inside ? 255 : (mask[i00] * w00 + mask[i10] * w10 + mask[i01] * w01 + mask[i11] * w11);
     }
+  }
+  if (useMask) keepConnectedProtrusions(o, ow, oh, mx, my, bw, bh);
+  const c = document.createElement('canvas'); c.width = ow; c.height = oh;
+  c.getContext('2d', { willReadFrequently: true }).putImageData(out, 0, 0);
+  p.tile = c;
+}
+// 박스 테두리에 붙어 있는 누끼 영역(=튀어나온 손·발)만 남기고 나머지(다른 사람, 배경 잡음) 제거
+function keepConnectedProtrusions(o, ow, oh, mx, my, bw, bh) {
+  const N = ow * oh, TH = 24;
+  const vis = new Uint8Array(N), stack = new Int32Array(N);
+  let sp = 0;
+  for (let y = my; y < my + bh; y++) for (let x = mx; x < mx + bw; x++) vis[y * ow + x] = 1;
+  for (let y = my - 2; y < my + bh + 2; y++) for (let x = mx - 2; x < mx + bw + 2; x++) {
+    if (x < 0 || y < 0 || x >= ow || y >= oh) continue;
+    const i = y * ow + x;
+    if (vis[i]) continue;
+    if (o[i * 4 + 3] > TH) { vis[i] = 1; stack[sp++] = i; }
+  }
+  while (sp) {
+    const i = stack[--sp], x = i % ow, y = (i / ow) | 0;
+    const nb = [x > 0 ? i - 1 : -1, x < ow - 1 ? i + 1 : -1, y > 0 ? i - ow : -1, y < oh - 1 ? i + ow : -1];
+    for (const j of nb) if (j >= 0 && !vis[j] && o[j * 4 + 3] > TH) { vis[j] = 1; stack[sp++] = j; }
+  }
+  for (let i = 0; i < N; i++) if (!vis[i]) o[i * 4 + 3] = 0;
+}
 
-    function getTotalSlotCount() {
-      const treeSum = state.rows.reduce((acc, v) => acc + v, 0);
-      return treeSum + state.trunkCount + state.giftCount;
-    }
-
-    function updateLayoutUI() {
-      const total = getTotalSlotCount();
-      let desc = state.rows.join('-');
-      if (state.trunkCount > 0) desc += ' + 기둥';
-      if (state.giftCount > 0) desc += ' + 선물2';
-      els.layoutSummaryBadge.textContent = `총 ${total}명 (${desc})`;
-      els.customRowsInput.value = state.rows.join(', ');
-
-      document.querySelectorAll('.layout-mode-btn').forEach(btn => {
-        const active = btn.dataset.layoutMode === state.layoutMode;
-        btn.className = `layout-mode-btn py-2 px-2 rounded-xl text-xs font-bold border transition text-center ${
-          active
-            ? 'bg-rose-600 text-white border-rose-600'
-            : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'
-        }`;
-      });
-    }
-
-    // ======================== 4. 사진 로딩 & 슬롯 그리드 ========================
-    function loadFileToCanvas(file) {
-      return new Promise((resolve, reject) => {
-        const reader = new FileReader();
-        reader.onload = (e) => {
-          const img = new Image();
-          img.onload = () => {
-            const maxDim = 1400;
-            const scale = Math.min(1, maxDim / Math.max(img.width, img.height));
-            const canvas = document.createElement('canvas');
-            canvas.width = Math.round(img.width * scale);
-            canvas.height = Math.round(img.height * scale);
-            const ctx = canvas.getContext('2d', { willReadFrequently: true });
-            ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-            resolve(canvas);
-          };
-          img.onerror = () => reject(new Error('이미지를 불러올 수 없습니다.'));
-          img.src = e.target.result;
-        };
-        reader.onerror = () => reject(new Error('파일을 읽을 수 없습니다.'));
-        reader.readAsDataURL(file);
-      });
-    }
-
-    async function handleBatchFiles(files) {
-      const imageFiles = Array.from(files).filter(f => f.type.startsWith('image/'));
-      if (imageFiles.length === 0) return;
-
-      let loadedCount = 0;
-      for (const file of imageFiles) {
-        const emptyIdx = state.slots.findIndex(s => !s.processedCanvas);
-        if (emptyIdx === -1) break;
+/* =========================================================
+ * 5. AI 누끼 (브라우저 내 실행, @imgly/background-removal)
+ * ========================================================= */
+let removerPromise = null, bgrUnavailable = false, modelProgress = '';
+function getRemover() {
+  if (!removerPromise) {
+    const urls = [
+      `https://cdn.jsdelivr.net/npm/@imgly/background-removal@${BGR_VERSION}/+esm`,
+      `https://esm.sh/@imgly/background-removal@${BGR_VERSION}`,
+    ];
+    removerPromise = (async () => {
+      let lastErr;
+      for (const u of urls) {
         try {
-          const canvas = await loadFileToCanvas(file);
-          state.slots[emptyIdx].origCanvas = cloneCanvas(canvas);
-          state.slots[emptyIdx].processedCanvas = cloneCanvas(canvas);
-          state.slots[emptyIdx].scale = 100;
-          state.slots[emptyIdx].offsetX = 0;
-          state.slots[emptyIdx].offsetY = 0;
-          state.slots[emptyIdx].rotate = 0;
-          loadedCount++;
-        } catch (err) {
-          console.error(err);
-        }
+          const m = await import(u);
+          const fn = m.removeBackground || (m.default && (m.default.removeBackground || m.default));
+          if (typeof fn === 'function') return fn;
+        } catch (e) { lastErr = e; console.warn('누끼 모듈 로드 실패', u, e); }
       }
-
-      if (loadedCount > 0) {
-        showToast(`${loadedCount}장의 사진을 차례대로 배치했습니다.`, 'success');
-      } else {
-        showToast('빈 칸이 없습니다. 인원 수를 늘리거나 기존 사진을 비워주세요.', 'info');
-      }
-      renderSlotGrid();
-      renderPreview();
-    }
-
-    function renderSlotGrid() {
-      const filled = state.slots.filter(s => s.processedCanvas).length;
-      els.uploadProgressText.textContent = `${filled} / ${state.slots.length}장`;
-
-      els.slotGrid.innerHTML = '';
-      state.slots.forEach((slot, idx) => {
-        const btn = document.createElement('button');
-        btn.type = 'button';
-        btn.className = `relative aspect-square rounded-xl border overflow-hidden flex items-center justify-center transition group ${
-          slot.processedCanvas
-            ? 'border-slate-200 checkerboard hover:border-rose-400'
-            : 'border-dashed border-slate-300 bg-slate-50 hover:border-rose-400 hover:bg-rose-50/40'
-        }`;
-
-        if (slot.processedCanvas) {
-          const img = document.createElement('img');
-          img.src = slot.processedCanvas.toDataURL('image/png');
-          img.className = 'w-full h-full object-contain p-0.5';
-          btn.appendChild(img);
-        } else {
-          const plus = document.createElement('span');
-          plus.className = 'text-xs font-bold text-slate-400 group-hover:text-rose-500';
-          plus.textContent = `+${idx + 1}`;
-          btn.appendChild(plus);
-        }
-
-        const badge = document.createElement('span');
-        badge.className = 'absolute top-0.5 left-0.5 px-1 py-0.2 rounded bg-slate-900/70 text-white text-[9px] font-bold leading-tight';
-        badge.textContent = idx + 1;
-        btn.appendChild(badge);
-
-        btn.addEventListener('click', () => onSlotClicked(idx));
-        els.slotGrid.appendChild(btn);
-      });
-    }
-
-    function onSlotClicked(idx) {
-      if (state.frontMode) {
-        if (!state.slots[idx]?.processedCanvas) {
-          showToast('사진이 들어있는 박스를 클릭해 주세요.', 'info');
-          return;
-        }
-        state.maxZIndex++;
-        state.slots[idx].zIndex = state.maxZIndex;
-        renderPreview();
-        showToast(`#${idx + 1}번 사진을 맨 앞으로 가져왔습니다.`, 'success');
-        return;
-      }
-
-      if (state.swapMode) {
-        if (state.swapFirstIndex === null) {
-          state.swapFirstIndex = idx;
-          showToast(`#${idx + 1}번 선택됨 — 바꿀 다른 박스를 클릭하세요.`, 'info');
-          renderPreview();
-        } else {
-          const a = state.swapFirstIndex;
-          const b = idx;
-          if (a !== b) {
-            const temp = state.slots[a];
-            state.slots[a] = state.slots[b];
-            state.slots[b] = temp;
-            showToast(`#${a + 1}번과 #${b + 1}번의 자리를 바꿨습니다.`, 'success');
-          }
-          state.swapFirstIndex = null;
-          renderSlotGrid();
-          renderPreview();
-        }
-        return;
-      }
-
-      if (state.slots[idx]?.processedCanvas) {
-        openEditorModal(idx);
-      } else {
-        state.activeUploadSlotIndex = idx;
-        els.singleFileInput.value = '';
-        els.singleFileInput.click();
+      throw lastErr || new Error('누끼 모듈을 불러오지 못했습니다');
+    })();
+  }
+  return removerPromise;
+}
+async function computeMask(p) {
+  const remove = await getRemover();
+  const sc = Math.min(1, 1280 / Math.max(p.src.width, p.src.height));
+  const c = document.createElement('canvas');
+  c.width = Math.round(p.src.width * sc); c.height = Math.round(p.src.height * sc);
+  c.getContext('2d').drawImage(p.src, 0, 0, c.width, c.height);
+  const blob = await new Promise((r) => c.toBlob(r, 'image/jpeg', 0.92));
+  const res = await remove(blob, {
+    publicPath: `https://staticimgly.com/@imgly/background-removal-data/${BGR_VERSION}/dist/`,
+    model: 'medium',
+    output: { format: 'image/png' },
+    progress: (key, cur, total) => {
+      if (total) { modelProgress = `AI 모델 준비 ${Math.round(cur / total * 100)}%`; updateStatus(); }
+    },
+  });
+  modelProgress = '';
+  const bmp = await createImageBitmap(res);
+  const mc = document.createElement('canvas'); mc.width = p.src.width; mc.height = p.src.height;
+  const mctx = mc.getContext('2d', { willReadFrequently: true });
+  mctx.drawImage(bmp, 0, 0, mc.width, mc.height);
+  const d = mctx.getImageData(0, 0, mc.width, mc.height).data;
+  const a = new Uint8Array(mc.width * mc.height);
+  for (let i = 0; i < a.length; i++) a[i] = d[i * 4 + 3];
+  p.mask = a;
+}
+const maskQueue = []; let maskBusy = false;
+function enqueueMask(p) {
+  if (bgrUnavailable || p.mask || p.maskStatus === 'pending' || p.maskStatus === 'running') return;
+  p.maskStatus = 'pending'; maskQueue.push(p); updateStatus(); runMaskQueue();
+}
+async function runMaskQueue() {
+  if (maskBusy) return; maskBusy = true;
+  while (maskQueue.length) {
+    const p = maskQueue.shift();
+    if (!state.photos.includes(p) || !p.protrude) { p.maskStatus = 'none'; continue; }
+    p.maskStatus = 'running'; updateStatus(); requestRender();
+    try {
+      await computeMask(p);
+      p.maskStatus = 'done';
+      buildTile(p);
+    } catch (e) {
+      console.error(e);
+      p.maskStatus = 'failed';
+      if (!p.mask && (e && /모듈|import|fetch|Failed/i.test(String(e.message || e)))) {
+        bgrUnavailable = true;
+        maskQueue.forEach((x) => (x.maskStatus = 'failed')); maskQueue.length = 0;
       }
     }
-
-    // ======================== 5. 로컬 반짝이 박스 자동 감지 & 크롭 엔진 (100% 브라우저 처리) ========================
-
-    /**
-     * 100% 로컬 컴퓨터 비전으로 사진 속 크리스마스 가랜드(초록/흰색/금색 모루)
-     * 테두리의 4개 꼭짓점(사다리꼴)을 즉시 감지합니다. (외부 API 불필요, 실패 없음)
-     */
-    function detectBoxQuadLocally(sourceCanvas) {
-      const maxDim = 260;
-      const scale = Math.min(1, maxDim / Math.max(sourceCanvas.width, sourceCanvas.height));
-      const w = Math.max(40, Math.round(sourceCanvas.width * scale));
-      const h = Math.max(40, Math.round(sourceCanvas.height * scale));
-
-      const tmp = document.createElement('canvas');
-      tmp.width = w;
-      tmp.height = h;
-      const ctx = tmp.getContext('2d', { willReadFrequently: true });
-      ctx.drawImage(sourceCanvas, 0, 0, w, h);
-      const data = ctx.getImageData(0, 0, w, h).data;
-
-      // 1) 픽셀별 밝기, 초록 가랜드 점수, 고주파 텍스처(반짝이) 점수 계산
-      const lum = new Float32Array(w * h);
-      const greenMap = new Float32Array(w * h);
-      const scoreMap = new Float32Array(w * h);
-      let greenPixelCount = 0;
-
-      for (let i = 0; i < w * h; i++) {
-        const idx = i * 4;
-        const r = data[idx], g = data[idx + 1], b = data[idx + 2];
-        lum[i] = 0.299 * r + 0.587 * g + 0.114 * b;
-
-        // 초록 가랜드(모루) 또는 빨간 오너먼트 감지
-        const gDiff = g - Math.max(r, b);
-        if (gDiff > 6 && g > 28 && g < 210) {
-          greenMap[i] = Math.min(1, gDiff / 35);
-          greenPixelCount++;
-        } else if (r - Math.max(g, b) > 45 && r > 90) {
-          greenMap[i] = 0.55;
-        }
-      }
-
-      const isGreenGarland = (greenPixelCount / (w * h)) > 0.025;
-
-      for (let y = 1; y < h - 1; y++) {
-        for (let x = 1; x < w - 1; x++) {
-          const p = y * w + x;
-          const gx = Math.abs(lum[p + 1] - lum[p - 1]);
-          const gy = Math.abs(lum[p + w] - lum[p - w]);
-          const edge = Math.min(1, (gx + gy) / 140);
-
-          if (isGreenGarland) {
-            scoreMap[p] = greenMap[p] * 2.8 + edge * 0.45;
-          } else {
-            // 흰색/은색/금색 반짝이 모루: 밝으면서 거친 고주파 텍스처
-            const brightBoost = lum[p] > 145 ? 1.7 : 0.65;
-            scoreMap[p] = edge * brightBoost;
-          }
-        }
-      }
-
-      // 1차원 배열 이동평균 스무딩
-      const smooth = (arr, radius) => {
-        const out = new Float32Array(arr.length);
-        for (let i = 0; i < arr.length; i++) {
-          let sum = 0, cnt = 0;
-          for (let d = -radius; d <= radius; d++) {
-            const j = i + d;
-            if (j >= 0 && j < arr.length) { sum += arr[j]; cnt++; }
-          }
-          out[i] = sum / (cnt || 1);
-        }
-        return out;
-      };
-
-      // 2) 상단 가랜드 수평선(topY) 찾기 (중앙 22% ~ 78% 구간)
-      const rowProfile = new Float32Array(h);
-      const xStart = Math.floor(w * 0.22);
-      const xEnd = Math.floor(w * 0.78);
-      for (let y = 0; y < h; y++) {
-        let s = 0;
-        for (let x = xStart; x < xEnd; x++) s += scoreMap[y * w + x];
-        rowProfile[y] = s / (xEnd - xStart);
-      }
-      const rowSmooth = smooth(rowProfile, 3);
-
-      let topPeakY = Math.floor(h * 0.12);
-      let topPeakVal = -1;
-      for (let y = Math.floor(h * 0.02); y < Math.floor(h * 0.52); y++) {
-        if (rowSmooth[y] > topPeakVal) {
-          topPeakVal = rowSmooth[y];
-          topPeakY = y;
-        }
-      }
-
-      // 피크에서 위로 올라가며 가랜드 바깥쪽 상단 경계 찾기
-      let topY = topPeakY;
-      for (let y = topPeakY; y >= 2; y--) {
-        if (rowSmooth[y] < topPeakVal * 0.32) {
-          topY = y;
-          break;
-        }
-        topY = y;
-      }
-      topY = Math.max(0, topY - Math.round(h * 0.015));
-
-      // 3) 좌우 가랜드 수직선(상단 절반 / 하단 절반 분리해 사다리꼴 원근감 반영)
-      const findSideBounds = (y1, y2) => {
-        const colProfile = new Float32Array(w);
-        const ry1 = Math.max(0, Math.min(h - 1, Math.floor(y1)));
-        const ry2 = Math.max(ry1 + 1, Math.min(h, Math.floor(y2)));
-        for (let x = 0; x < w; x++) {
-          let s = 0;
-          for (let y = ry1; y < ry2; y++) s += scoreMap[y * w + x];
-          colProfile[x] = s / (ry2 - ry1);
-        }
-        const colSmooth = smooth(colProfile, 3);
-
-        // 왼쪽 기둥 (2% ~ 44%)
-        let lPeakX = Math.floor(w * 0.14), lPeakVal = -1;
-        for (let x = Math.floor(w * 0.02); x < Math.floor(w * 0.44); x++) {
-          if (colSmooth[x] > lPeakVal) { lPeakVal = colSmooth[x]; lPeakX = x; }
-        }
-        let leftX = lPeakX;
-        for (let x = lPeakX; x >= 1; x--) {
-          if (colSmooth[x] < lPeakVal * 0.30) { leftX = x; break; }
-          leftX = x;
-        }
-        leftX = Math.max(0, leftX - Math.round(w * 0.012));
-
-        // 오른쪽 기둥 (56% ~ 98%)
-        let rPeakX = Math.floor(w * 0.86), rPeakVal = -1;
-        for (let x = Math.floor(w * 0.56); x < Math.floor(w * 0.98); x++) {
-          if (colSmooth[x] > rPeakVal) { rPeakVal = colSmooth[x]; rPeakX = x; }
-        }
-        let rightX = rPeakX;
-        for (let x = rPeakX; x < w - 1; x++) {
-          if (colSmooth[x] < rPeakVal * 0.30) { rightX = x; break; }
-          rightX = x;
-        }
-        rightX = Math.min(w - 1, rightX + Math.round(w * 0.012));
-
-        return { leftX, rightX };
-      };
-
-      const midY = Math.min(h - 10, topY + Math.round((h - topY) * 0.48));
-      const upperSides = findSideBounds(topY + h * 0.04, midY);
-      const lowerSides = findSideBounds(midY, h * 0.94);
-
-      // 이상치 보정 (상/하단 좌우 폭이 비정상적으로 어긋나면 평균화)
-      let tlx = upperSides.leftX;
-      let trx = upperSides.rightX;
-      let blx = lowerSides.leftX;
-      let brx = lowerSides.rightX;
-
-      if (Math.abs(tlx - blx) > w * 0.14) {
-        const avg = Math.min(tlx, blx);
-        tlx = avg; blx = avg;
-      }
-      if (Math.abs(trx - brx) > w * 0.14) {
-        const avg = Math.max(trx, brx);
-        trx = avg; brx = avg;
-      }
-
-      // 최소 너비 보장
-      if (trx - tlx < w * 0.35) { tlx = w * 0.12; trx = w * 0.88; }
-      if (brx - blx < w * 0.35) { blx = w * 0.10; brx = w * 0.90; }
-
-      // 하단 경계 (대부분 박스 바닥이나 아이의 다리가 하단에 위치하므로 98% 유지)
-      const bottomY = Math.min(h - 1, Math.round(h * 0.985));
-
-      const inv = 1 / scale;
-      return {
-        tl: { x: Math.round(tlx * inv), y: Math.round(topY * inv) },
-        tr: { x: Math.round(trx * inv), y: Math.round(topY * inv) },
-        br: { x: Math.round(brx * inv), y: Math.round(bottomY * inv) },
-        bl: { x: Math.round(blx * inv), y: Math.round(bottomY * inv) },
-      };
-    }
-
-    /** 4점 다각형(반짝이 테두리) 바깥을 투명하게 잘라내는 헬퍼 */
-    function clipCanvasByQuad(sourceCanvas, quad) {
-      const minX = Math.max(0, Math.floor(Math.min(quad.tl.x, quad.tr.x, quad.br.x, quad.bl.x)));
-      const minY = Math.max(0, Math.floor(Math.min(quad.tl.y, quad.tr.y, quad.br.y, quad.bl.y)));
-      const maxX = Math.min(sourceCanvas.width, Math.ceil(Math.max(quad.tl.x, quad.tr.x, quad.br.x, quad.bl.x)));
-      const maxY = Math.min(sourceCanvas.height, Math.ceil(Math.max(quad.tl.y, quad.tr.y, quad.br.y, quad.bl.y)));
-      const cw = Math.max(20, maxX - minX);
-      const ch = Math.max(20, maxY - minY);
-
-      const out = document.createElement('canvas');
-      out.width = cw;
-      out.height = ch;
-      const ctx = out.getContext('2d', { willReadFrequently: true });
-      ctx.save();
-      ctx.beginPath();
-      ctx.moveTo(quad.tl.x - minX, quad.tl.y - minY);
-      ctx.lineTo(quad.tr.x - minX, quad.tr.y - minY);
-      ctx.lineTo(quad.br.x - minX, quad.br.y - minY);
-      ctx.lineTo(quad.bl.x - minX, quad.bl.y - minY);
-      ctx.closePath();
-      ctx.clip();
-      ctx.drawImage(sourceCanvas, -minX, -minY);
-      ctx.restore();
-      return out;
-    }
-
-    /** [모드 1] 100% 로컬 자동 반짝이 테두리 크롭 */
-    function cropToBoxOnlyLocally(sourceCanvas) {
-      const quad = detectBoxQuadLocally(sourceCanvas);
-      return clipCanvasByQuad(sourceCanvas, quad);
-    }
-
-    /** [모드 2] 100% 로컬 외곽 배경 정리 (중앙 72% 박스 내부 보호 + 4모서리 외곽 제거) */
-    function cleanOuterBackgroundLocally(sourceCanvas, tolerance = 34) {
-      const work = cloneCanvas(sourceCanvas);
-      const w = work.width, h = work.height;
-      const seeds = [
-        [2, 2], [w - 3, 2], [2, h - 3], [w - 3, h - 3],
-        [Math.floor(w / 2), 2], [2, Math.floor(h / 2)], [w - 3, Math.floor(h / 2)]
-      ];
-      seeds.forEach(([sx, sy]) => floodFillErase(work, sx, sy, tolerance));
-
-      // 박스 중앙 영역은 원본 픽셀로 안전 복구 (아이 얼굴/옷 구멍 방지)
-      const ctx = work.getContext('2d', { willReadFrequently: true });
-      const origData = sourceCanvas.getContext('2d', { willReadFrequently: true }).getImageData(0, 0, w, h).data;
-      const imgData = ctx.getImageData(0, 0, w, h);
-      const data = imgData.data;
-
-      const safeX1 = Math.floor(w * 0.16), safeX2 = Math.ceil(w * 0.84);
-      const safeY1 = Math.floor(h * 0.14), safeY2 = Math.ceil(h * 0.88);
-      for (let y = safeY1; y < safeY2; y++) {
-        for (let x = safeX1; x < safeX2; x++) {
-          const aIdx = (y * w + x) * 4 + 3;
-          if (origData[aIdx] > 20) data[aIdx] = origData[aIdx];
-        }
-      }
-      ctx.putImageData(imgData, 0, 0);
-      removeSmallIslands(work);
-      return trimTransparentCanvas(work);
-    }
-
-    function floodFillErase(canvas, startX, startY, tolerance = 38) {
-      const ctx = canvas.getContext('2d', { willReadFrequently: true });
-      const w = canvas.width, h = canvas.height;
-      const sx = Math.max(0, Math.min(w - 1, Math.round(startX)));
-      const sy = Math.max(0, Math.min(h - 1, Math.round(startY)));
-
-      const imgData = ctx.getImageData(0, 0, w, h);
-      const data = imgData.data;
-      const startIdx = (sy * w + sx) * 4;
-      if (data[startIdx + 3] === 0) return;
-
-      const sr = data[startIdx], sg = data[startIdx + 1], sb = data[startIdx + 2];
-      const tolSq = tolerance * tolerance * 3;
-      const visited = new Uint8Array(w * h);
-      const stack = [sx, sy];
-      visited[sy * w + sx] = 1;
-
-      while (stack.length > 0) {
-        const y = stack.pop();
-        const x = stack.pop();
-        const idx = (y * w + x) * 4;
-        data[idx + 3] = 0;
-
-        const neighbors = [[x - 1, y], [x + 1, y], [x, y - 1], [x, y + 1]];
-        for (const [nx, ny] of neighbors) {
-          if (nx < 0 || nx >= w || ny < 0 || ny >= h) continue;
-          const pos = ny * w + nx;
-          if (visited[pos]) continue;
-          const nIdx = pos * 4;
-          if (data[nIdx + 3] === 0) { visited[pos] = 1; continue; }
-          const dr = data[nIdx] - sr;
-          const dg = data[nIdx + 1] - sg;
-          const db = data[nIdx + 2] - sb;
-          if (dr * dr + dg * dg + db * db <= tolSq) {
-            visited[pos] = 1;
-            stack.push(nx, ny);
-          }
-        }
-      }
-      ctx.putImageData(imgData, 0, 0);
-    }
-
-    function removeSmallIslands(canvas) {
-      const ctx = canvas.getContext('2d', { willReadFrequently: true });
-      const w = canvas.width, h = canvas.height;
-      const imgData = ctx.getImageData(0, 0, w, h);
-      const data = imgData.data;
-      const visited = new Uint8Array(w * h);
-      const minPixels = Math.max(100, Math.floor(w * h * 0.01));
-
-      for (let y = 0; y < h; y++) {
-        for (let x = 0; x < w; x++) {
-          const startPos = y * w + x;
-          if (visited[startPos] || data[startPos * 4 + 3] < 20) continue;
-          const comp = [];
-          const stack = [x, y];
-          visited[startPos] = 1;
-          while (stack.length > 0) {
-            const cy = stack.pop(), cx = stack.pop();
-            const p = cy * w + cx;
-            comp.push(p);
-            const nbs = [[cx - 1, cy], [cx + 1, cy], [cx, cy - 1], [cx, cy + 1]];
-            for (const [nx, ny] of nbs) {
-              if (nx < 0 || nx >= w || ny < 0 || ny >= h) continue;
-              const np = ny * w + nx;
-              if (!visited[np] && data[np * 4 + 3] >= 20) {
-                visited[np] = 1;
-                stack.push(nx, ny);
-              }
-            }
-          }
-          if (comp.length < minPixels) {
-            for (const p of comp) data[p * 4 + 3] = 0;
-          }
-        }
-      }
-      ctx.putImageData(imgData, 0, 0);
-    }
-
-    function trimTransparentCanvas(canvas) {
-      const ctx = canvas.getContext('2d', { willReadFrequently: true });
-      const w = canvas.width, h = canvas.height;
-      const data = ctx.getImageData(0, 0, w, h).data;
-      let minX = w, minY = h, maxX = 0, maxY = 0, found = false;
-
-      for (let y = 0; y < h; y++) {
-        for (let x = 0; x < w; x++) {
-          if (data[(y * w + x) * 4 + 3] > 20) {
-            if (x < minX) minX = x;
-            if (x > maxX) maxX = x;
-            if (y < minY) minY = y;
-            if (y > maxY) maxY = y;
-            found = true;
-          }
-        }
-      }
-      if (!found) return canvas;
-      const pad = 4;
-      const cx = Math.max(0, minX - pad);
-      const cy = Math.max(0, minY - pad);
-      const cw = Math.min(w - cx, maxX - minX + 1 + pad * 2);
-      const ch = Math.min(h - cy, maxY - minY + 1 + pad * 2);
-
-      const trimmed = document.createElement('canvas');
-      trimmed.width = cw;
-      trimmed.height = ch;
-      trimmed.getContext('2d').drawImage(canvas, cx, cy, cw, ch, 0, 0, cw, ch);
-      return trimmed;
-    }
-
-    // ======================== 6. 트리 캔버스 렌더링 엔진 ========================
-    function getCanvasDimensions(baseWidth) {
-      const map = {
-        '3:4': [baseWidth, Math.round(baseWidth * 4 / 3)],
-        '9:16': [baseWidth, Math.round(baseWidth * 16 / 9)],
-        '4:5': [baseWidth, Math.round(baseWidth * 5 / 4)],
-        '1:1': [baseWidth, baseWidth],
-      };
-      return map[state.aspectRatio] || map['3:4'];
-    }
-
-    function renderPreview() {
-      const [w, h] = getCanvasDimensions(1080);
-      if (els.previewCanvas.width !== w || els.previewCanvas.height !== h) {
-        els.previewCanvas.width = w;
-        els.previewCanvas.height = h;
-      }
-      const ctx = els.previewCanvas.getContext('2d');
-      renderTreeScene(ctx, w, h, true);
-    }
-
-    function renderTreeScene(ctx, W, H, isPreview) {
-      // 1. 배경 채우기
-      ctx.save();
-      ctx.fillStyle = state.bgColor;
-      ctx.fillRect(0, 0, W, H);
-
-      // 은은한 비네팅
-      const grad = ctx.createRadialGradient(W * 0.5, H * 0.42, W * 0.12, W * 0.5, H * 0.5, W * 0.85);
-      grad.addColorStop(0, 'rgba(255,255,255,0.06)');
-      grad.addColorStop(1, 'rgba(0,0,0,0.18)');
-      ctx.fillStyle = grad;
-      ctx.fillRect(0, 0, W, H);
-      ctx.restore();
-
-      // 2. 배경 파티 장식
-      if (state.decoStyle === 'confetti') {
-        drawConfettiBackground(ctx, W, H);
-      } else if (state.decoStyle === 'snow') {
-        drawSnowBackground(ctx, W, H);
-      }
-
-      // 3. 상단 문구 & 소속 배지
-      drawHeaderTexts(ctx, W, H);
-
-      // 4. 트리 슬롯 좌표 계산
-      const rows = state.rows;
-      const numTreeRows = rows.length;
-      const maxCols = Math.max(...rows, 1);
-      const hasTrunkSlot = state.trunkCount > 0;
-      const totalVertRows = numTreeRows + (hasTrunkSlot ? 1 : 0);
-
-      const topMargin = H * (state.showStar ? 0.145 : 0.08);
-      const bottomMargin = H * ((state.showGifts || state.showTrunk) ? 0.13 : 0.06);
-      const sideMargin = W * 0.055;
-
-      const availW = W - sideMargin * 2;
-      const availH = H - topMargin - bottomMargin;
-
-      const overlapXFactor = 1 - state.overlapX / 100;
-      const overlapYFactor = 1 - state.overlapY / 100;
-      const ratioFactor = state.boxRatio / 100; // height / width
-
-      const maxBoxWByWidth = availW / (1 + (maxCols - 1) * overlapXFactor);
-      const maxBoxWByHeight = availH / (ratioFactor * (1 + (totalVertRows - 1) * overlapYFactor));
-      const boxW = Math.max(36, Math.min(maxBoxWByWidth, maxBoxWByHeight));
-      const boxH = boxW * ratioFactor;
-
-      const stepX = boxW * overlapXFactor;
-      const stepY = boxH * overlapYFactor;
-
-      const treeTotalH = boxH + (totalVertRows - 1) * stepY;
-      const startY = topMargin + Math.max(0, (availH - treeTotalH) * 0.45);
-
-      const slotRects = [];
-      let slotIdx = 0;
-
-      // 트리 본체 층 배치
-      for (let r = 0; r < numTreeRows; r++) {
-        const cols = rows[r];
-        const rowW = boxW + (cols - 1) * stepX;
-        const startX = (W - rowW) / 2;
-        const y = startY + r * stepY;
-        for (let c = 0; c < cols; c++) {
-          slotRects.push({
-            index: slotIdx++,
-            x: startX + c * stepX,
-            y,
-            w: boxW,
-            h: boxH,
-            baseRotate: 0,
-          });
-        }
-      }
-
-      const treeBottomY = startY + (numTreeRows - 1) * stepY + boxH;
-
-      // 기둥 슬롯 (기둥 포함형 / 기둥+선물형)
-      if (hasTrunkSlot) {
-        slotRects.push({
-          index: slotIdx++,
-          x: (W - boxW) / 2,
-          y: startY + numTreeRows * stepY,
-          w: boxW,
-          h: boxH,
-          baseRotate: 0,
-        });
-      }
-
-      // 좌우 기울어진 선물 슬롯 (기둥+선물형)
-      if (state.giftCount >= 2) {
-        const giftY = startY + numTreeRows * stepY + boxH * 0.12;
-        slotRects.push({
-          index: slotIdx++,
-          x: W * 0.22 - boxW * 0.5,
-          y: giftY,
-          w: boxW * 0.92,
-          h: boxH * 0.92,
-          baseRotate: -11,
-        });
-        slotRects.push({
-          index: slotIdx++,
-          x: W * 0.78 - boxW * 0.5,
-          y: giftY,
-          w: boxW * 0.92,
-          h: boxH * 0.92,
-          baseRotate: 11,
-        });
-      }
-
-      if (isPreview) {
-        state.renderedSlotRects = slotRects;
-      }
-
-      // 5. 나무 기둥 (박스 뒤쪽)
-      if (state.showTrunk && !hasTrunkSlot) {
-        drawTreeTrunk(ctx, W, H, treeBottomY, boxW);
-      }
-
-      // 6. 상단 왕별 (1번 박스 위쪽에 겹치지 않게 배치)
-      if (state.showStar && slotRects.length > 0) {
-        const topBox = slotRects[0];
-        const starRadius = Math.max(boxW * 0.42, W * 0.068);
-        const starCenterX = topBox.x + topBox.w / 2;
-        const starCenterY = Math.max(starRadius * 1.15, topBox.y - starRadius * 0.68);
-        drawTopStar(ctx, starCenterX, starCenterY, starRadius);
-      }
-
-      // 7. 박스 슬롯 그리기 (zIndex 순서대로 정렬 -> 클릭해 앞으로 가져온 사진이 맨 위!)
-      const sortedRects = [...slotRects].sort((a, b) => {
-        const za = state.slots[a.index]?.zIndex || 0;
-        const zb = state.slots[b.index]?.zIndex || 0;
-        if (za !== zb) return za - zb;
-        return a.index - b.index;
-      });
-
-      for (const rect of sortedRects) {
-        drawSlotBox(ctx, rect, isPreview);
-      }
-
-      // 8. 하단 선물 상자 장식
-      if (state.showGifts && state.giftCount === 0) {
-        drawBottomGifts(ctx, W, H);
-      }
-    }
-
-    function drawSlotBox(ctx, rect, isPreview) {
-      const slot = state.slots[rect.index];
-      const cx = rect.x + rect.w / 2;
-      const cy = rect.y + rect.h / 2;
-
-      ctx.save();
-      ctx.translate(cx, cy);
-      const totalRot = ((rect.baseRotate || 0) + (slot?.rotate || 0)) * Math.PI / 180;
-      if (totalRot !== 0) ctx.rotate(totalRot);
-
-      if (slot && slot.processedCanvas) {
-        const img = slot.processedCanvas;
-        const scale = (slot.scale || 100) / 100;
-        const ox = ((slot.offsetX || 0) / 100) * rect.w;
-        const oy = ((slot.offsetY || 0) / 100) * rect.h;
-
-        // 박스 크기에 비율 유지하여 맞춤 (contain 기반 + 넉넉히 채움)
-        const imgAspect = img.width / img.height;
-        const boxAspect = rect.w / rect.h;
-        let drawW, drawH;
-        if (imgAspect > boxAspect) {
-          drawW = rect.w * scale;
-          drawH = drawW / imgAspect;
-        } else {
-          drawH = rect.h * scale;
-          drawW = drawH * imgAspect;
-        }
-
-        if (state.showBoxShadow) {
-          ctx.shadowColor = 'rgba(0, 0, 0, 0.34)';
-          ctx.shadowBlur = rect.w * 0.1;
-          ctx.shadowOffsetX = 0;
-          ctx.shadowOffsetY = rect.h * 0.04;
-        }
-
-        ctx.drawImage(img, -drawW / 2 + ox, -drawH / 2 + oy, drawW, drawH);
-
-        // 자리 바꾸기 선택 강조 테두리
-        if (isPreview && state.swapMode && state.swapFirstIndex === rect.index) {
-          ctx.shadowColor = 'transparent';
-          ctx.strokeStyle = '#fbbf24';
-          ctx.lineWidth = Math.max(4, rect.w * 0.035);
-          ctx.strokeRect(-rect.w / 2, -rect.h / 2, rect.w, rect.h);
-        }
-
-        // 미리보기 번호 배지
-        if (isPreview && state.showGuides) {
-          ctx.shadowColor = 'transparent';
-          const r = Math.max(12, rect.w * 0.11);
-          ctx.fillStyle = 'rgba(15, 23, 42, 0.72)';
-          ctx.beginPath();
-          ctx.arc(-rect.w / 2 + r * 1.15, -rect.h / 2 + r * 1.15, r, 0, Math.PI * 2);
-          ctx.fill();
-          ctx.fillStyle = '#ffffff';
-          ctx.font = `700 ${Math.round(r * 1.1)}px "Inter", sans-serif`;
-          ctx.textAlign = 'center';
-          ctx.textBaseline = 'middle';
-          ctx.fillText(String(rect.index + 1), -rect.w / 2 + r * 1.15, -rect.h / 2 + r * 1.18);
-        }
-      } else if (isPreview) {
-        // 빈 슬롯 가이드 박스
-        const radius = Math.min(rect.w, rect.h) * 0.1;
-        ctx.fillStyle = (state.swapMode && state.swapFirstIndex === rect.index)
-          ? 'rgba(251, 191, 36, 0.35)'
-          : 'rgba(255, 255, 255, 0.16)';
-        ctx.strokeStyle = 'rgba(255, 255, 255, 0.65)';
-        ctx.lineWidth = Math.max(2, rect.w * 0.02);
-        ctx.setLineDash([8, 6]);
-        roundRectPath(ctx, -rect.w / 2, -rect.h / 2, rect.w, rect.h, radius);
-        ctx.fill();
-        ctx.stroke();
-        ctx.setLineDash([]);
-
-        ctx.fillStyle = '#ffffff';
-        ctx.font = `800 ${Math.round(Math.min(rect.w, rect.h) * 0.25)}px "Inter", sans-serif`;
-        ctx.textAlign = 'center';
-        ctx.textBaseline = 'middle';
-        ctx.fillText(String(rect.index + 1), 0, -rect.h * 0.07);
-
-        ctx.fillStyle = 'rgba(255,255,255,0.85)';
-        ctx.font = `600 ${Math.round(Math.min(rect.w, rect.h) * 0.12)}px "Noto Sans KR", sans-serif`;
-        ctx.fillText('사진 추가', 0, rect.h * 0.18);
-      }
-
-      ctx.restore();
-    }
-
-    function roundRectPath(ctx, x, y, w, h, r) {
-      ctx.beginPath();
-      ctx.moveTo(x + r, y);
-      ctx.arcTo(x + w, y, x + w, y + h, r);
-      ctx.arcTo(x + w, y + h, x, y + h, r);
-      ctx.arcTo(x, y + h, x, y, r);
-      ctx.arcTo(x, y, x + w, y, r);
-      ctx.closePath();
-    }
-
-    function drawTopStar(ctx, cx, cy, outerR) {
-      ctx.save();
-      ctx.translate(cx, cy);
-      ctx.shadowColor = 'rgba(253, 224, 71, 0.75)';
-      ctx.shadowBlur = outerR * 0.55;
-
-      const innerR = outerR * 0.48;
-      const spikes = 5;
-      const grad = ctx.createRadialGradient(-outerR * 0.15, -outerR * 0.2, outerR * 0.1, 0, 0, outerR);
-      grad.addColorStop(0, '#FEF08A');
-      grad.addColorStop(0.55, '#FACC15');
-      grad.addColorStop(1, '#EAB308');
-
-      ctx.beginPath();
-      for (let i = 0; i < spikes * 2; i++) {
-        const r = i % 2 === 0 ? outerR : innerR;
-        const angle = (i * Math.PI) / spikes - Math.PI / 2;
-        const x = Math.cos(angle) * r;
-        const y = Math.sin(angle) * r;
-        if (i === 0) ctx.moveTo(x, y);
-        else ctx.lineTo(x, y);
-      }
-      ctx.closePath();
-      ctx.fillStyle = grad;
-      ctx.fill();
-      ctx.lineWidth = Math.max(2, outerR * 0.05);
-      ctx.strokeStyle = '#FDE047';
-      ctx.lineJoin = 'round';
-      ctx.stroke();
-
-      // 별 하이라이트
-      ctx.shadowColor = 'transparent';
-      ctx.fillStyle = 'rgba(255,255,255,0.45)';
-      ctx.beginPath();
-      ctx.ellipse(-outerR * 0.15, -outerR * 0.22, outerR * 0.16, outerR * 0.09, -0.5, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.restore();
-    }
-
-    function drawTreeTrunk(ctx, W, H, treeBottomY, boxW) {
-      const trunkW = Math.max(W * 0.14, boxW * 1.15);
-      const trunkX = (W - trunkW) / 2;
-      const trunkY = treeBottomY - boxW * 0.15;
-      const trunkH = H - trunkY + 10;
-
-      ctx.save();
-      const grad = ctx.createLinearGradient(trunkX, trunkY, trunkX + trunkW, trunkY);
-      grad.addColorStop(0, '#5C3A21');
-      grad.addColorStop(0.45, '#7C4D2B');
-      grad.addColorStop(1, '#4A2C16');
-      ctx.fillStyle = grad;
-      ctx.fillRect(trunkX, trunkY, trunkW, trunkH);
-
-      // 나무결
-      ctx.strokeStyle = 'rgba(42, 22, 8, 0.45)';
-      ctx.lineWidth = Math.max(2, W * 0.003);
-      for (let i = 1; i <= 4; i++) {
-        const lx = trunkX + (trunkW * i) / 5;
-        ctx.beginPath();
-        ctx.moveTo(lx, trunkY);
-        ctx.bezierCurveTo(lx - 6, trunkY + trunkH * 0.35, lx + 8, trunkY + trunkH * 0.65, lx - 3, H);
-        ctx.stroke();
-      }
-      ctx.restore();
-    }
-
-    function drawBottomGifts(ctx, W, H) {
-      const gifts = [
-        { x: 0.02, w: 0.15, h: 0.09, body: '#F3E5AB', ribbon: '#1B4D3E' },
-        { x: 0.13, w: 0.13, h: 0.075, body: '#DC2626', ribbon: '#F59E0B' },
-        { x: 0.24, w: 0.16, h: 0.10, body: '#15803D', ribbon: '#EF4444' },
-        { x: 0.52, w: 0.13, h: 0.08, body: '#E11D48', ribbon: '#86EFAC' },
-        { x: 0.63, w: 0.16, h: 0.095, body: '#166534', ribbon: '#FACC15' },
-        { x: 0.78, w: 0.11, h: 0.075, body: '#FEF3C7', ribbon: '#B91C1C' },
-        { x: 0.87, w: 0.12, h: 0.085, body: '#14532D', ribbon: '#FDE047' },
-      ];
-
-      gifts.forEach(g => {
-        const gx = W * g.x;
-        const gw = W * g.w;
-        const gh = H * g.h;
-        const gy = H - gh + 4;
-
-        ctx.save();
-        ctx.shadowColor = 'rgba(0,0,0,0.28)';
-        ctx.shadowBlur = 12;
-        ctx.shadowOffsetY = -2;
-
-        // 상자 본체
-        ctx.fillStyle = g.body;
-        roundRectPath(ctx, gx, gy, gw, gh, 6);
-        ctx.fill();
-
-        ctx.shadowColor = 'transparent';
-        // 세로 리본
-        ctx.fillStyle = g.ribbon;
-        const rw = gw * 0.18;
-        ctx.fillRect(gx + (gw - rw) / 2, gy, rw, gh);
-        // 가로 리본
-        ctx.fillRect(gx, gy + gh * 0.25, gw, rw * 0.85);
-
-        // 리본 매듭
-        const bowY = gy;
-        const bowX = gx + gw / 2;
-        ctx.beginPath();
-        ctx.ellipse(bowX - rw * 0.9, bowY - rw * 0.45, rw * 0.95, rw * 0.55, -0.35, 0, Math.PI * 2);
-        ctx.ellipse(bowX + rw * 0.9, bowY - rw * 0.45, rw * 0.95, rw * 0.55, 0.35, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.restore();
-      });
-    }
-
-    function drawConfettiBackground(ctx, W, H) {
-      const sparkles = [
-        { x: 0.07, y: 0.21, s: 0.022, c: '#6EE7B7' },
-        { x: 0.70, y: 0.11, s: 0.018, c: '#6EE7B7' },
-        { x: 0.85, y: 0.14, s: 0.032, c: '#FDE047' },
-        { x: 0.67, y: 0.22, s: 0.030, c: '#FDE047' },
-        { x: 0.78, y: 0.33, s: 0.016, c: '#6EE7B7' },
-        { x: 0.23, y: 0.42, s: 0.024, c: '#FDE047' },
-        { x: 0.11, y: 0.48, s: 0.028, c: '#FFFFFF' },
-        { x: 0.92, y: 0.59, s: 0.026, c: '#FFFFFF' },
-      ];
-
-      sparkles.forEach(sp => {
-        const cx = W * sp.x, cy = H * sp.y, r = W * sp.s;
-        ctx.save();
-        ctx.fillStyle = sp.c;
-        ctx.beginPath();
-        ctx.moveTo(cx, cy - r);
-        ctx.quadraticCurveTo(cx + r * 0.15, cy - r * 0.15, cx + r, cy);
-        ctx.quadraticCurveTo(cx + r * 0.15, cy + r * 0.15, cx, cy + r);
-        ctx.quadraticCurveTo(cx - r * 0.15, cy + r * 0.15, cx - r, cy);
-        ctx.quadraticCurveTo(cx - r * 0.15, cy - r * 0.15, cx, cy - r);
-        ctx.fill();
-        ctx.restore();
-      });
-
-      const curls = [
-        { x: 0.13, y: 0.30, rot: 0.4, c: '#FFFFFF', sc: 1 },
-        { x: 0.88, y: 0.28, rot: -0.6, c: '#FFFFFF', sc: 1.05 },
-        { x: 0.78, y: 0.41, rot: -0.2, c: '#FFFFFF', sc: 0.95 },
-        { x: 0.09, y: 0.60, rot: 0.3, c: '#6EE7B7', sc: 0.9 },
-        { x: 0.89, y: 0.45, rot: 0.2, c: '#6EE7B7', sc: 0.8 },
-      ];
-
-      curls.forEach(cr => {
-        ctx.save();
-        ctx.translate(W * cr.x, H * cr.y);
-        ctx.rotate(cr.rot);
-        ctx.scale(cr.sc, cr.sc);
-        ctx.strokeStyle = cr.c;
-        ctx.lineWidth = Math.max(4, W * 0.009);
-        ctx.lineCap = 'round';
-        ctx.beginPath();
-        const u = W * 0.025;
-        ctx.moveTo(-u * 2.2, 0);
-        ctx.bezierCurveTo(-u * 1.5, -u * 1.4, -u * 0.4, -u * 1.4, -u * 0.6, 0);
-        ctx.bezierCurveTo(-u * 0.8, u * 0.8, 0, u * 0.9, u * 0.4, -u * 0.5);
-        ctx.bezierCurveTo(u * 0.8, -u * 1.4, u * 1.8, -u * 0.8, u * 2.1, u * 0.3);
-        ctx.stroke();
-        ctx.restore();
-      });
-    }
-
-    function drawSnowBackground(ctx, W, H) {
-      let seed = 42;
-      const rand = () => {
-        seed = (seed * 1664525 + 1013904223) % 4294967296;
-        return seed / 4294967296;
-      };
-      ctx.save();
-      for (let i = 0; i < 90; i++) {
-        const x = rand() * W;
-        const y = rand() * H;
-        const r = (rand() * 0.006 + 0.002) * W;
-        ctx.fillStyle = `rgba(255,255,255,${(rand() * 0.55 + 0.25).toFixed(2)})`;
-        ctx.beginPath();
-        ctx.arc(x, y, r, 0, Math.PI * 2);
-        ctx.fill();
-      }
-      ctx.restore();
-    }
-
-    function drawHeaderTexts(ctx, W, H) {
-      if (state.titleText.trim()) {
-        ctx.save();
-        ctx.translate(W * 0.06, H * 0.085);
-        ctx.rotate(-0.12);
-        const fontSize = Math.round(W * 0.052);
-        ctx.font = `700 ${fontSize}px "Fredoka", "Jua", sans-serif`;
-        ctx.lineWidth = Math.max(3, W * 0.008);
-        ctx.strokeStyle = 'rgba(0,0,0,0.28)';
-        ctx.strokeText(state.titleText.trim(), 0, 0);
-        ctx.fillStyle = '#FDE047';
-        ctx.fillText(state.titleText.trim(), 0, 0);
-        ctx.restore();
-      }
-
-      if (state.badgeText.trim()) {
-        ctx.save();
-        const fontSize = Math.round(W * 0.036);
-        ctx.font = `700 ${fontSize}px "Jua", "Noto Sans KR", sans-serif`;
-        ctx.textAlign = 'right';
-        ctx.fillStyle = '#FFFFFF';
-        ctx.shadowColor = 'rgba(0,0,0,0.35)';
-        ctx.shadowBlur = 8;
-        ctx.fillText(state.badgeText.trim(), W * 0.94, H * 0.075);
-        ctx.restore();
-      }
-    }
-
-    // ======================== 7. 사진 편집 & 수동 박스 크롭 모달 ========================
-    function openEditorModal(slotIndex) {
-      const slot = state.slots[slotIndex];
-      if (!slot || !slot.processedCanvas) return;
-
-      editorState.slotIndex = slotIndex;
-      editorState.origCanvas = cloneCanvas(slot.origCanvas || slot.processedCanvas);
-      editorState.workCanvas = cloneCanvas(slot.processedCanvas);
-      editorState.undoStack = [];
-      editorState.scale = slot.scale ?? 100;
-      editorState.offsetX = slot.offsetX ?? 0;
-      editorState.offsetY = slot.offsetY ?? 0;
-      editorState.rotate = slot.rotate ?? 0;
-
-      els.editorSlotBadge.textContent = `#${slotIndex + 1}번 박스`;
-      els.rangeTScale.value = editorState.scale;
-      els.tScaleVal.textContent = `${editorState.scale}%`;
-      els.rangeTOffsetX.value = editorState.offsetX;
-      els.tOffsetXVal.textContent = `${editorState.offsetX}`;
-      els.rangeTOffsetY.value = editorState.offsetY;
-      els.tOffsetYVal.textContent = `${editorState.offsetY}`;
-      els.rangeTRotate.value = editorState.rotate;
-      els.tRotateVal.textContent = `${editorState.rotate}°`;
-
-      setEditorTool('crop');
-      resetCropRect();
-      els.editorModal.classList.remove('hidden');
-      drawEditorCanvas();
-    }
-
-    function closeEditorModal() {
-      els.editorModal.classList.add('hidden');
-      editorState.slotIndex = null;
-    }
-
-    function setEditorTool(tool) {
-      editorState.tool = tool;
-      document.querySelectorAll('.editor-tool-btn').forEach(btn => {
-        const active = btn.dataset.tool === tool;
-        btn.className = `editor-tool-btn py-2 rounded-xl text-xs font-bold border transition ${
-          active
-            ? 'bg-rose-600 text-white border-rose-600'
-            : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-50'
-        }`;
-      });
-      els.cropActionBar.classList.toggle('hidden', tool !== 'crop');
-
-      const hints = {
-        crop: '현재 도구: <b>반짝이 크롭</b> — 4개 꼭짓점을 반짝이 모서리에 딱 맞게 드래그한 뒤 [자르기]를 누르세요.',
-        wand: '현재 도구: <b>매직완드</b> — 제거할 배경 색상을 클릭하세요.',
-        erase: '현재 도구: <b>지우개</b> — 지우고 싶은 영역을 드래그하세요.',
-        restore: '현재 도구: <b>복구</b> — 지워진 영역을 다시 살릴 부분을 드래그하세요.',
-      };
-      els.editorToolHint.innerHTML = hints[tool] || '';
-      drawEditorCanvas();
-    }
-
-    function resetCropRect() {
-      if (!editorState.workCanvas) return;
-      const w = editorState.workCanvas.width;
-      const h = editorState.workCanvas.height;
-      const padX = Math.round(w * 0.08);
-      const padY = Math.round(h * 0.08);
-      editorState.cropQuad = {
-        tl: { x: padX, y: padY },
-        tr: { x: w - padX, y: padY },
-        br: { x: w - padX, y: h - padY },
-        bl: { x: padX, y: h - padY },
-      };
-    }
-
-    function pushEditorUndo() {
-      if (!editorState.workCanvas) return;
-      editorState.undoStack.push({
-        work: cloneCanvas(editorState.workCanvas),
-        orig: cloneCanvas(editorState.origCanvas),
-      });
-      if (editorState.undoStack.length > 15) editorState.undoStack.shift();
-    }
-
-    function drawEditorCanvas() {
-      if (!editorState.workCanvas) return;
-      const w = editorState.workCanvas.width;
-      const h = editorState.workCanvas.height;
-      if (els.editorCanvas.width !== w || els.editorCanvas.height !== h) {
-        els.editorCanvas.width = w;
-        els.editorCanvas.height = h;
-      }
-      const ctx = els.editorCanvas.getContext('2d');
-      ctx.clearRect(0, 0, w, h);
-      ctx.drawImage(editorState.workCanvas, 0, 0);
-
-      if (editorState.tool === 'crop' && editorState.cropQuad) {
-        const q = editorState.cropQuad;
-        ctx.save();
-        // 다각형 바깥 영역 어둡게 (evenodd 클리핑)
-        ctx.fillStyle = 'rgba(15, 23, 42, 0.58)';
-        ctx.beginPath();
-        ctx.rect(0, 0, w, h);
-        ctx.moveTo(q.tl.x, q.tl.y);
-        ctx.lineTo(q.tr.x, q.tr.y);
-        ctx.lineTo(q.br.x, q.br.y);
-        ctx.lineTo(q.bl.x, q.bl.y);
-        ctx.closePath();
-        ctx.fill('evenodd');
-
-        // 반짝이 크롭 테두리
-        const lw = Math.max(2, Math.round(Math.max(w, h) * 0.005));
-        ctx.strokeStyle = '#fb7185';
-        ctx.lineWidth = lw;
-        ctx.setLineDash([lw * 3, lw * 2]);
-        ctx.beginPath();
-        ctx.moveTo(q.tl.x, q.tl.y);
-        ctx.lineTo(q.tr.x, q.tr.y);
-        ctx.lineTo(q.br.x, q.br.y);
-        ctx.lineTo(q.bl.x, q.bl.y);
-        ctx.closePath();
-        ctx.stroke();
-        ctx.setLineDash([]);
-
-        // 4개 꼭짓점(원형) + 4개 변 중간점(사각형) 핸들
-        const hs = Math.max(12, Math.round(Math.max(w, h) * 0.028));
-        const corners = [q.tl, q.tr, q.br, q.bl];
-        ctx.fillStyle = '#ffffff';
-        ctx.strokeStyle = '#e11d48';
-        ctx.lineWidth = Math.max(2, lw * 0.9);
-        corners.forEach((pt) => {
-          ctx.beginPath();
-          ctx.arc(pt.x, pt.y, hs * 0.55, 0, Math.PI * 2);
-          ctx.fill();
-          ctx.stroke();
-        });
-
-        const mids = [
-          { x: (q.tl.x + q.tr.x) / 2, y: (q.tl.y + q.tr.y) / 2 },
-          { x: (q.tr.x + q.br.x) / 2, y: (q.tr.y + q.br.y) / 2 },
-          { x: (q.br.x + q.bl.x) / 2, y: (q.br.y + q.bl.y) / 2 },
-          { x: (q.bl.x + q.tl.x) / 2, y: (q.bl.y + q.tl.y) / 2 },
-        ];
-        const ms = hs * 0.72;
-        mids.forEach((pt) => {
-          ctx.beginPath();
-          ctx.rect(pt.x - ms / 2, pt.y - ms / 2, ms, ms);
-          ctx.fill();
-          ctx.stroke();
-        });
-        ctx.restore();
-      }
-    }
-
-    function getEditorPointerPos(e) {
-      const rect = els.editorCanvas.getBoundingClientRect();
-      const clientX = e.touches ? e.touches[0].clientX : e.clientX;
-      const clientY = e.touches ? e.touches[0].clientY : e.clientY;
-      const scaleX = els.editorCanvas.width / rect.width;
-      const scaleY = els.editorCanvas.height / rect.height;
-      return {
-        x: Math.max(0, Math.min(els.editorCanvas.width, (clientX - rect.left) * scaleX)),
-        y: Math.max(0, Math.min(els.editorCanvas.height, (clientY - rect.top) * scaleY)),
-      };
-    }
-
-    function isPointInQuad(x, y, q) {
-      const pts = [q.tl, q.tr, q.br, q.bl];
-      let inside = false;
-      for (let i = 0, j = pts.length - 1; i < pts.length; j = i++) {
-        const xi = pts[i].x, yi = pts[i].y;
-        const xj = pts[j].x, yj = pts[j].y;
-        const intersect = ((yi > y) !== (yj > y)) && (x < (xj - xi) * (y - yi) / ((yj - yi) || 1e-6) + xi);
-        if (intersect) inside = !inside;
-      }
-      return inside;
-    }
-
-    function hitTestCropHandle(x, y) {
-      const q = editorState.cropQuad;
-      if (!q) return 'new';
-      const tol = Math.max(24, Math.max(els.editorCanvas.width, els.editorCanvas.height) * 0.05);
-      const dist = (p) => Math.hypot(x - p.x, y - p.y);
-
-      if (dist(q.tl) <= tol) return 'tl';
-      if (dist(q.tr) <= tol) return 'tr';
-      if (dist(q.br) <= tol) return 'br';
-      if (dist(q.bl) <= tol) return 'bl';
-
-      const midN = { x: (q.tl.x + q.tr.x) / 2, y: (q.tl.y + q.tr.y) / 2 };
-      const midE = { x: (q.tr.x + q.br.x) / 2, y: (q.tr.y + q.br.y) / 2 };
-      const midS = { x: (q.br.x + q.bl.x) / 2, y: (q.br.y + q.bl.y) / 2 };
-      const midW = { x: (q.bl.x + q.tl.x) / 2, y: (q.bl.y + q.tl.y) / 2 };
-
-      if (dist(midN) <= tol) return 'n';
-      if (dist(midE) <= tol) return 'e';
-      if (dist(midS) <= tol) return 's';
-      if (dist(midW) <= tol) return 'w';
-
-      if (isPointInQuad(x, y, q)) return 'move';
-      return 'new';
-    }
-
-    function applyCropRect() {
-      if (!editorState.workCanvas || !editorState.cropQuad) return;
-      const q = editorState.cropQuad;
-      const minX = Math.min(q.tl.x, q.tr.x, q.br.x, q.bl.x);
-      const maxX = Math.max(q.tl.x, q.tr.x, q.br.x, q.bl.x);
-      const minY = Math.min(q.tl.y, q.tr.y, q.br.y, q.bl.y);
-      const maxY = Math.max(q.tl.y, q.tr.y, q.br.y, q.bl.y);
-      if (maxX - minX < 20 || maxY - minY < 20) {
-        showToast('크롭 영역이 너무 작습니다.', 'error');
-        return;
-      }
-      pushEditorUndo();
-      editorState.workCanvas = clipCanvasByQuad(editorState.workCanvas, q);
-      editorState.origCanvas = clipCanvasByQuad(editorState.origCanvas, q);
-      resetCropRect();
-      drawEditorCanvas();
-      showToast('반짝이 테두리대로 깔끔하게 잘랐습니다!', 'success');
-    }
-
-    function applyBrushAt(x, y) {
-      if (!editorState.workCanvas) return;
-      const ctx = editorState.workCanvas.getContext('2d');
-      const radius = (editorState.brushSize / 2) * (editorState.workCanvas.width / 420);
-
-      if (editorState.tool === 'erase') {
-        ctx.save();
-        ctx.globalCompositeOperation = 'destination-out';
-        ctx.beginPath();
-        ctx.arc(x, y, radius, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.restore();
-      } else if (editorState.tool === 'restore') {
-        ctx.save();
-        ctx.beginPath();
-        ctx.arc(x, y, radius, 0, Math.PI * 2);
-        ctx.clip();
-        ctx.drawImage(editorState.origCanvas, 0, 0);
-        ctx.restore();
-      }
-      drawEditorCanvas();
-    }
-
-    // ======================== 8. 고해상도 PNG 다운로드 ========================
-    function downloadHighResPNG() {
-      const [exportW, exportH] = getCanvasDimensions(state.exportWidth);
-      const exportCanvas = document.createElement('canvas');
-      exportCanvas.width = exportW;
-      exportCanvas.height = exportH;
-      const ctx = exportCanvas.getContext('2d');
-      renderTreeScene(ctx, exportW, exportH, false);
-
-      exportCanvas.toBlob((blob) => {
-        if (!blob) {
-          showToast('이미지 생성 중 오류가 발생했습니다.', 'error');
-          return;
-        }
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `박스트리_${state.peopleCount}명_${exportW}x${exportH}.png`;
-        document.body.appendChild(a);
-        a.click();
-        a.remove();
-        setTimeout(() => URL.revokeObjectURL(url), 1000);
-        showToast(`고해상도 이미지(${exportW}×${exportH})를 다운로드했습니다!`, 'success');
-      }, 'image/png');
-    }
-
-    // ======================== 9. 이벤트 바인딩 ========================
-    function setupEvents() {
-      // 1) 인원 수 조절 (- / + / 직접 입력)
-      els.btnDecreaseCount.addEventListener('click', () => {
-        applyPeopleCountAndLayout(state.peopleCount - 1, state.layoutMode);
-      });
-      els.btnIncreaseCount.addEventListener('click', () => {
-        applyPeopleCountAndLayout(state.peopleCount + 1, state.layoutMode);
-      });
-      els.peopleCountInput.addEventListener('input', () => {
-        const val = parseInt(els.peopleCountInput.value, 10);
-        if (!isNaN(val) && val >= 1 && val <= 50) {
-          applyPeopleCountAndLayout(val, state.layoutMode);
-        }
-      });
-      els.peopleCountInput.addEventListener('change', () => {
-        applyPeopleCountAndLayout(els.peopleCountInput.value, state.layoutMode);
-      });
-
-      // 트리 모양 모드 전환
-      document.querySelectorAll('.layout-mode-btn').forEach(btn => {
-        btn.addEventListener('click', () => {
-          applyPeopleCountAndLayout(state.peopleCount, btn.dataset.layoutMode);
-        });
-      });
-
-      // 층별 인원 직접 조정
-      els.btnApplyCustomRows.addEventListener('click', () => {
-        const parsed = els.customRowsInput.value
-          .split(',')
-          .map(s => parseInt(s.trim(), 10))
-          .filter(n => !isNaN(n) && n > 0 && n <= 15);
-        if (parsed.length === 0) {
-          showToast('올바른 숫자를 쉼표로 구분해 입력해 주세요. (예: 1, 2, 3, 4)', 'error');
-          return;
-        }
-        state.rows = parsed;
-        state.peopleCount = getTotalSlotCount();
-        els.peopleCountInput.value = state.peopleCount;
-        syncSlotsToTotalCount();
-        updateLayoutUI();
-        renderSlotGrid();
-        renderPreview();
-        showToast('층별 인원 구성을 적용했습니다.', 'success');
-      });
-
-      // 2) 일괄 & 단일 파일 업로드
-      els.batchFileInput.addEventListener('change', (e) => {
-        if (e.target.files?.length) {
-          handleBatchFiles(e.target.files);
-          e.target.value = '';
-        }
-      });
-
-      els.dropZone.addEventListener('dragover', (e) => {
-        e.preventDefault();
-        els.dropZone.classList.add('border-rose-500', 'bg-rose-100/60');
-      });
-      els.dropZone.addEventListener('dragleave', () => {
-        els.dropZone.classList.remove('border-rose-500', 'bg-rose-100/60');
-      });
-      els.dropZone.addEventListener('drop', (e) => {
-        e.preventDefault();
-        els.dropZone.classList.remove('border-rose-500', 'bg-rose-100/60');
-        if (e.dataTransfer.files?.length) handleBatchFiles(e.dataTransfer.files);
-      });
-
-      els.singleFileInput.addEventListener('change', async (e) => {
-        const file = e.target.files?.[0];
-        if (!file || state.activeUploadSlotIndex === null) return;
-        const idx = state.activeUploadSlotIndex;
-        try {
-          const canvas = await loadFileToCanvas(file);
-          state.slots[idx].origCanvas = cloneCanvas(canvas);
-          state.slots[idx].processedCanvas = cloneCanvas(canvas);
-          state.slots[idx].scale = 100;
-          state.slots[idx].offsetX = 0;
-          state.slots[idx].offsetY = 0;
-          state.slots[idx].rotate = 0;
-          renderSlotGrid();
-          renderPreview();
-          showToast(`#${idx + 1}번 박스에 사진을 넣었습니다.`, 'success');
-        } catch (err) {
-          showToast('사진을 불러오지 못했습니다.', 'error');
-        }
-      });
-
-      // 전체 비우기
-      els.btnClearAllPhotos.addEventListener('click', () => {
-        state.slots = state.slots.map(() => createEmptySlot());
-        renderSlotGrid();
-        renderPreview();
-        showToast('모든 사진을 비웠습니다.', 'info');
-      });
-
-      // 일괄 자동 반짝이 크롭 (100% 로컬, 초고속)
-      els.btnBatchFastBg.addEventListener('click', () => {
-        const targets = state.slots
-          .map((s, idx) => ({ s, idx }))
-          .filter(item => item.s.processedCanvas);
-        if (targets.length === 0) {
-          showToast('먼저 사진을 업로드해 주세요.', 'info');
-          return;
-        }
-        let ok = 0;
-        for (const { s } of targets) {
-          const src = s.origCanvas || s.processedCanvas;
-          s.processedCanvas = cropToBoxOnlyLocally(src);
-          ok++;
-        }
-        renderSlotGrid();
-        renderPreview();
-        showToast(`${ok}장 모두 반짝이 테두리에 맞춰 자동 크롭되었습니다! (미세 조정은 사진을 클릭하세요)`, 'success');
-      });
-
-      // 일괄 외곽 배경 정리 (100% 로컬)
-      els.btnBatchAiBg.addEventListener('click', () => {
-        const targets = state.slots
-          .map((s, idx) => ({ s, idx }))
-          .filter(item => item.s.processedCanvas);
-        if (targets.length === 0) {
-          showToast('먼저 사진을 업로드해 주세요.', 'info');
-          return;
-        }
-        let ok = 0;
-        for (const { s } of targets) {
-          s.processedCanvas = cleanOuterBackgroundLocally(s.processedCanvas, 34);
-          ok++;
-        }
-        renderSlotGrid();
-        renderPreview();
-        showToast(`${ok}장 모두 외곽 배경이 깔끔하게 정리되었습니다!`, 'success');
-      });
-
-      // 3) 배경 & 장식 컨트롤
-      document.querySelectorAll('.bg-preset-btn').forEach(btn => {
-        btn.addEventListener('click', () => {
-          state.bgColor = btn.dataset.bg;
-          els.customBgColor.value = state.bgColor;
-          document.querySelectorAll('.bg-preset-btn').forEach(b => {
-            b.classList.remove('border-slate-900');
-            b.classList.add('border-white');
-          });
-          btn.classList.remove('border-white');
-          btn.classList.add('border-slate-900');
-          renderPreview();
-        });
-      });
-
-      els.customBgColor.addEventListener('input', (e) => {
-        state.bgColor = e.target.value;
-        renderPreview();
-      });
-
-      els.chkStar.addEventListener('change', (e) => { state.showStar = e.target.checked; renderPreview(); });
-      els.chkTrunk.addEventListener('change', (e) => { state.showTrunk = e.target.checked; renderPreview(); });
-      els.chkGifts.addEventListener('change', (e) => { state.showGifts = e.target.checked; renderPreview(); });
-      els.chkBoxShadow.addEventListener('change', (e) => { state.showBoxShadow = e.target.checked; renderPreview(); });
-      els.chkShowGuides.addEventListener('change', (e) => { state.showGuides = e.target.checked; renderPreview(); });
-
-      document.querySelectorAll('.deco-btn').forEach(btn => {
-        btn.addEventListener('click', () => {
-          state.decoStyle = btn.dataset.deco;
-          document.querySelectorAll('.deco-btn').forEach(b => {
-            const active = b.dataset.deco === state.decoStyle;
-            b.className = `deco-btn py-1.5 rounded-xl text-xs font-bold border ${
-              active
-                ? 'bg-rose-600 text-white border-rose-600'
-                : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'
-            }`;
-          });
-          renderPreview();
-        });
-      });
-
-      els.titleTextInput.addEventListener('input', (e) => { state.titleText = e.target.value; renderPreview(); });
-      els.badgeTextInput.addEventListener('input', (e) => { state.badgeText = e.target.value; renderPreview(); });
-
-      els.rangeOverlapX.addEventListener('input', (e) => {
-        state.overlapX = parseInt(e.target.value, 10);
-        els.overlapXVal.textContent = `${state.overlapX}%`;
-        renderPreview();
-      });
-      els.rangeOverlapY.addEventListener('input', (e) => {
-        state.overlapY = parseInt(e.target.value, 10);
-        els.overlapYVal.textContent = `${state.overlapY}%`;
-        renderPreview();
-      });
-      els.rangeBoxRatio.addEventListener('input', (e) => {
-        state.boxRatio = parseInt(e.target.value, 10);
-        const label = state.boxRatio === 100 ? ' (1:1)' : state.boxRatio < 100 ? ' (가로형)' : ' (세로형)';
-        els.boxRatioVal.textContent = `${state.boxRatio}%${label}`;
-        renderPreview();
-      });
-
-      els.aspectSelect.addEventListener('change', (e) => { state.aspectRatio = e.target.value; renderPreview(); });
-      els.resolutionSelect.addEventListener('change', (e) => { state.exportWidth = parseInt(e.target.value, 10); });
-
-      // 레이어 앞으로 모드 & 자리 바꾸기 모드
-      els.btnFrontMode.addEventListener('click', () => {
-        state.frontMode = !state.frontMode;
-        if (state.frontMode) {
-          state.swapMode = false;
-          state.swapFirstIndex = null;
-          els.swapModeBanner.classList.add('hidden');
-          els.btnSwapMode.classList.remove('bg-amber-100', 'border-amber-400', 'text-amber-900');
-        }
-        els.frontModeBanner.classList.toggle('hidden', !state.frontMode);
-        els.btnFrontMode.classList.toggle('bg-indigo-100', state.frontMode);
-        els.btnFrontMode.classList.toggle('border-indigo-400', state.frontMode);
-        els.btnFrontMode.classList.toggle('text-indigo-900', state.frontMode);
-        renderPreview();
-      });
-
-      els.btnSwapMode.addEventListener('click', () => {
-        state.swapMode = !state.swapMode;
-        state.swapFirstIndex = null;
-        if (state.swapMode) {
-          state.frontMode = false;
-          els.frontModeBanner.classList.add('hidden');
-          els.btnFrontMode.classList.remove('bg-indigo-100', 'border-indigo-400', 'text-indigo-900');
-        }
-        els.swapModeBanner.classList.toggle('hidden', !state.swapMode);
-        els.btnSwapMode.classList.toggle('bg-amber-100', state.swapMode);
-        els.btnSwapMode.classList.toggle('border-amber-400', state.swapMode);
-        els.btnSwapMode.classList.toggle('text-amber-900', state.swapMode);
-        renderPreview();
-      });
-
-      // 다운로드
-      els.btnDownloadTop.addEventListener('click', downloadHighResPNG);
-      els.btnDownloadMain.addEventListener('click', downloadHighResPNG);
-
-      // 미리보기 캔버스 클릭 -> 최상위 zIndex 슬롯 우선 히트 테스트
-      els.previewCanvas.addEventListener('click', (e) => {
-        const rect = els.previewCanvas.getBoundingClientRect();
-        const x = (e.clientX - rect.left) * (els.previewCanvas.width / rect.width);
-        const y = (e.clientY - rect.top) * (els.previewCanvas.height / rect.height);
-
-        const sortedDesc = [...state.renderedSlotRects].sort((a, b) => {
-          const za = state.slots[a.index]?.zIndex || 0;
-          const zb = state.slots[b.index]?.zIndex || 0;
-          if (za !== zb) return zb - za;
-          return b.index - a.index;
-        });
-
-        for (const r of sortedDesc) {
-          if (x >= r.x && x <= r.x + r.w && y >= r.y && y <= r.y + r.h) {
-            onSlotClicked(r.index);
-            return;
-          }
-        }
-      });
-
-      // 4) 편집 모달 이벤트
-      els.btnCloseEditor.addEventListener('click', closeEditorModal);
-
-      document.querySelectorAll('.editor-tool-btn').forEach(btn => {
-        btn.addEventListener('click', () => setEditorTool(btn.dataset.tool));
-      });
-
-      els.rangeWandTol.addEventListener('input', (e) => {
-        editorState.wandTol = parseInt(e.target.value, 10);
-        els.wandTolVal.textContent = editorState.wandTol;
-      });
-      els.rangeBrushSize.addEventListener('input', (e) => {
-        editorState.brushSize = parseInt(e.target.value, 10);
-        els.brushSizeVal.textContent = `${editorState.brushSize}px`;
-      });
-
-      // 편집 캔버스 마우스 & 터치 드래그 (크롭 / 완드 / 지우개 / 복구)
-      const onPointerDown = (e) => {
-        if (!editorState.workCanvas) return;
-        e.preventDefault();
-        const { x, y } = getEditorPointerPos(e);
-
-        if (editorState.tool === 'crop') {
-          const mode = hitTestCropHandle(x, y);
-          editorState.cropDragMode = mode;
-          const q = editorState.cropQuad;
-          editorState.cropDragStart = {
-            x,
-            y,
-            quad: q
-              ? { tl: { ...q.tl }, tr: { ...q.tr }, br: { ...q.br }, bl: { ...q.bl } }
-              : { tl: { x, y }, tr: { x, y }, br: { x, y }, bl: { x, y } },
-          };
-          if (mode === 'new') {
-            editorState.cropQuad = {
-              tl: { x, y }, tr: { x, y }, br: { x, y }, bl: { x, y },
-            };
-          }
-          drawEditorCanvas();
-          return;
-        }
-
-        if (editorState.tool === 'wand') {
-          pushEditorUndo();
-          floodFillErase(editorState.workCanvas, x, y, editorState.wandTol);
-          drawEditorCanvas();
-          return;
-        }
-
-        pushEditorUndo();
-        editorState.isDrawing = true;
-        applyBrushAt(x, y);
-      };
-
-      const onPointerMove = (e) => {
-        if (!editorState.workCanvas) return;
-
-        if (editorState.tool === 'crop' && editorState.cropDragMode && editorState.cropDragStart) {
-          e.preventDefault();
-          const { x, y } = getEditorPointerPos(e);
-          const cw = editorState.workCanvas.width;
-          const ch = editorState.workCanvas.height;
-          const clampX = (v) => Math.max(0, Math.min(cw, v));
-          const clampY = (v) => Math.max(0, Math.min(ch, v));
-          const s = editorState.cropDragStart;
-          const mode = editorState.cropDragMode;
-          const dx = x - s.x;
-          const dy = y - s.y;
-          const q0 = s.quad;
-
-          if (mode === 'new') {
-            const x1 = clampX(Math.min(s.x, x));
-            const y1 = clampY(Math.min(s.y, y));
-            const x2 = clampX(Math.max(s.x, x));
-            const y2 = clampY(Math.max(s.y, y));
-            editorState.cropQuad = {
-              tl: { x: x1, y: y1 },
-              tr: { x: x2, y: y1 },
-              br: { x: x2, y: y2 },
-              bl: { x: x1, y: y2 },
-            };
-          } else if (mode === 'move') {
-            const minX = Math.min(q0.tl.x, q0.tr.x, q0.br.x, q0.bl.x);
-            const maxX = Math.max(q0.tl.x, q0.tr.x, q0.br.x, q0.bl.x);
-            const minY = Math.min(q0.tl.y, q0.tr.y, q0.br.y, q0.bl.y);
-            const maxY = Math.max(q0.tl.y, q0.tr.y, q0.br.y, q0.bl.y);
-            const cdx = Math.max(-minX, Math.min(cw - maxX, dx));
-            const cdy = Math.max(-minY, Math.min(ch - maxY, dy));
-            editorState.cropQuad = {
-              tl: { x: q0.tl.x + cdx, y: q0.tl.y + cdy },
-              tr: { x: q0.tr.x + cdx, y: q0.tr.y + cdy },
-              br: { x: q0.br.x + cdx, y: q0.br.y + cdy },
-              bl: { x: q0.bl.x + cdx, y: q0.bl.y + cdy },
-            };
-          } else if (mode === 'tl' || mode === 'tr' || mode === 'br' || mode === 'bl') {
-            editorState.cropQuad = {
-              tl: { ...q0.tl }, tr: { ...q0.tr }, br: { ...q0.br }, bl: { ...q0.bl },
-              [mode]: { x: clampX(x), y: clampY(y) },
-            };
-          } else if (mode === 'n') {
-            editorState.cropQuad = {
-              tl: { x: q0.tl.x, y: clampY(q0.tl.y + dy) },
-              tr: { x: q0.tr.x, y: clampY(q0.tr.y + dy) },
-              br: { ...q0.br },
-              bl: { ...q0.bl },
-            };
-          } else if (mode === 's') {
-            editorState.cropQuad = {
-              tl: { ...q0.tl },
-              tr: { ...q0.tr },
-              br: { x: q0.br.x, y: clampY(q0.br.y + dy) },
-              bl: { x: q0.bl.x, y: clampY(q0.bl.y + dy) },
-            };
-          } else if (mode === 'w') {
-            editorState.cropQuad = {
-              tl: { x: clampX(q0.tl.x + dx), y: q0.tl.y },
-              tr: { ...q0.tr },
-              br: { ...q0.br },
-              bl: { x: clampX(q0.bl.x + dx), y: q0.bl.y },
-            };
-          } else if (mode === 'e') {
-            editorState.cropQuad = {
-              tl: { ...q0.tl },
-              tr: { x: clampX(q0.tr.x + dx), y: q0.tr.y },
-              br: { x: clampX(q0.br.x + dx), y: q0.br.y },
-              bl: { ...q0.bl },
-            };
-          }
-          drawEditorCanvas();
-          return;
-        }
-
-        if (!editorState.isDrawing) return;
-        e.preventDefault();
-        const { x, y } = getEditorPointerPos(e);
-        applyBrushAt(x, y);
-      };
-
-      const onPointerUp = () => {
-        editorState.isDrawing = false;
-        editorState.cropDragMode = null;
-        editorState.cropDragStart = null;
-      };
-
-      els.editorCanvas.addEventListener('mousedown', onPointerDown);
-      window.addEventListener('mousemove', onPointerMove);
-      window.addEventListener('mouseup', onPointerUp);
-      els.editorCanvas.addEventListener('touchstart', onPointerDown, { passive: false });
-      window.addEventListener('touchmove', onPointerMove, { passive: false });
-      window.addEventListener('touchend', onPointerUp);
-
-      // 수동 크롭 적용 & 초기화
-      els.btnApplyCrop.addEventListener('click', applyCropRect);
-      els.btnResetCropRect.addEventListener('click', () => {
-        resetCropRect();
-        drawEditorCanvas();
-      });
-
-      // 모달 내 반짝이 테두리 4점 자동 맞추기 (100% 로컬)
-      els.btnEditorAutoCorner.addEventListener('click', () => {
-        if (!editorState.workCanvas) return;
-        setEditorTool('crop');
-        editorState.cropQuad = detectBoxQuadLocally(editorState.workCanvas);
-        drawEditorCanvas();
-        showToast('반짝이 테두리에 4점을 맞췄습니다. 확인 후 [자르기] 또는 [전체 일괄 적용]을 누르세요!', 'success');
-      });
-
-      // 모달 내 현재 4점 크롭 모양을 전체 사진에 일괄 적용 (같은 구도 촬영 시 최고 효율!)
-      els.btnEditorApplyAllCrop.addEventListener('click', () => {
-        if (!editorState.workCanvas || !editorState.cropQuad) return;
-        const w = editorState.workCanvas.width;
-        const h = editorState.workCanvas.height;
-        const q = editorState.cropQuad;
-
-        // 현재 4점의 정규화 비율(0~1) 계산
-        const normQuad = {
-          tl: { x: q.tl.x / w, y: q.tl.y / h },
-          tr: { x: q.tr.x / w, y: q.tr.y / h },
-          br: { x: q.br.x / w, y: q.br.y / h },
-          bl: { x: q.bl.x / w, y: q.bl.y / h },
-        };
-
-        let count = 0;
-        state.slots.forEach((slot) => {
-          const src = slot.origCanvas || slot.processedCanvas;
-          if (!src) return;
-          const sw = src.width, sh = src.height;
-          const targetQuad = {
-            tl: { x: normQuad.tl.x * sw, y: normQuad.tl.y * sh },
-            tr: { x: normQuad.tr.x * sw, y: normQuad.tr.y * sh },
-            br: { x: normQuad.br.x * sw, y: normQuad.br.y * sh },
-            bl: { x: normQuad.bl.x * sw, y: normQuad.bl.y * sh },
-          };
-          slot.processedCanvas = clipCanvasByQuad(src, targetQuad);
-          count++;
-        });
-
-        // 현재 편집 중인 캔버스도 동일하게 반영
-        pushEditorUndo();
-        editorState.workCanvas = clipCanvasByQuad(editorState.workCanvas, q);
-        editorState.origCanvas = clipCanvasByQuad(editorState.origCanvas, q);
-        resetCropRect();
-        drawEditorCanvas();
-        renderSlotGrid();
-        renderPreview();
-        showToast(`총 ${count}장의 사진에 동일한 반짝이 크롭 모양을 일괄 적용했습니다!`, 'success');
-      });
-
-      // 모달 내 외곽 배경 자동 정리 (100% 로컬)
-      els.btnEditorAiRemove.addEventListener('click', () => {
-        if (!editorState.workCanvas) return;
-        pushEditorUndo();
-        editorState.workCanvas = cleanOuterBackgroundLocally(editorState.workCanvas, editorState.wandTol);
-        editorState.origCanvas = cloneCanvas(editorState.workCanvas);
-        resetCropRect();
-        drawEditorCanvas();
-        showToast('외곽 배경을 정리했습니다! (남은 부분은 지우개/매직완드로 다듬어 주세요)', 'success');
-      });
-
-      // 되돌리기 & 원본 복구
-      els.btnEditorUndo.addEventListener('click', () => {
-        const prev = editorState.undoStack.pop();
-        if (!prev) {
-          showToast('되돌릴 작업이 없습니다.', 'info');
-          return;
-        }
-        editorState.workCanvas = prev.work;
-        editorState.origCanvas = prev.orig;
-        resetCropRect();
-        drawEditorCanvas();
-      });
-
-      els.btnEditorResetBg.addEventListener('click', () => {
-        const slot = state.slots[editorState.slotIndex];
-        if (!slot?.origCanvas) return;
-        pushEditorUndo();
-        editorState.origCanvas = cloneCanvas(slot.origCanvas);
-        editorState.workCanvas = cloneCanvas(slot.origCanvas);
-        resetCropRect();
-        drawEditorCanvas();
-        showToast('원본 사진으로 복구했습니다.', 'info');
-      });
-
-      // 위치/크기/각도 슬라이더
-      els.rangeTScale.addEventListener('input', (e) => {
-        editorState.scale = parseInt(e.target.value, 10);
-        els.tScaleVal.textContent = `${editorState.scale}%`;
-      });
-      els.rangeTOffsetX.addEventListener('input', (e) => {
-        editorState.offsetX = parseInt(e.target.value, 10);
-        els.tOffsetXVal.textContent = `${editorState.offsetX}`;
-      });
-      els.rangeTOffsetY.addEventListener('input', (e) => {
-        editorState.offsetY = parseInt(e.target.value, 10);
-        els.tOffsetYVal.textContent = `${editorState.offsetY}`;
-      });
-      els.rangeTRotate.addEventListener('input', (e) => {
-        editorState.rotate = parseInt(e.target.value, 10);
-        els.tRotateVal.textContent = `${editorState.rotate}°`;
-      });
-
-      els.btnResetTransform.addEventListener('click', () => {
-        editorState.scale = 100;
-        editorState.offsetX = 0;
-        editorState.offsetY = 0;
-        editorState.rotate = 0;
-        els.rangeTScale.value = 100; els.tScaleVal.textContent = '100%';
-        els.rangeTOffsetX.value = 0; els.tOffsetXVal.textContent = '0';
-        els.rangeTOffsetY.value = 0; els.tOffsetYVal.textContent = '0';
-        els.rangeTRotate.value = 0; els.tRotateVal.textContent = '0°';
-      });
-
-      // 모달 내 레이어 맨 앞 / 맨 뒤
-      els.btnEditorBringFront.addEventListener('click', () => {
-        const idx = editorState.slotIndex;
-        if (idx === null) return;
-        state.maxZIndex++;
-        state.slots[idx].zIndex = state.maxZIndex;
-        renderPreview();
-        showToast(`#${idx + 1}번 사진을 맨 앞 레이어로 이동했습니다.`, 'success');
-      });
-      els.btnEditorSendBack.addEventListener('click', () => {
-        const idx = editorState.slotIndex;
-        if (idx === null) return;
-        state.minZIndex--;
-        state.slots[idx].zIndex = state.minZIndex;
-        renderPreview();
-        showToast(`#${idx + 1}번 사진을 맨 뒤 레이어로 이동했습니다.`, 'success');
-      });
-
-      // 사진 교체 / 삭제 / 적용 완료
-      els.btnReplacePhoto.addEventListener('click', () => {
-        const idx = editorState.slotIndex;
-        closeEditorModal();
-        state.activeUploadSlotIndex = idx;
-        els.singleFileInput.value = '';
-        els.singleFileInput.click();
-      });
-
-      els.btnDeletePhoto.addEventListener('click', () => {
-        const idx = editorState.slotIndex;
-        if (idx !== null) {
-          state.slots[idx] = createEmptySlot();
-          renderSlotGrid();
-          renderPreview();
-          showToast(`#${idx + 1}번 사진을 삭제했습니다.`, 'info');
-        }
-        closeEditorModal();
-      });
-
-      els.btnSaveEditor.addEventListener('click', () => {
-        const idx = editorState.slotIndex;
-        if (idx !== null && editorState.workCanvas) {
-          state.slots[idx].processedCanvas = cloneCanvas(editorState.workCanvas);
-          state.slots[idx].scale = editorState.scale;
-          state.slots[idx].offsetX = editorState.offsetX;
-          state.slots[idx].offsetY = editorState.offsetY;
-          state.slots[idx].rotate = editorState.rotate;
-          renderSlotGrid();
-          renderPreview();
-          showToast(`#${idx + 1}번 박스 보정이 적용되었습니다.`, 'success');
-        }
-        closeEditorModal();
-      });
-    }
-
-    // ======================== 10. 초기화 ========================
-    window.addEventListener('DOMContentLoaded', () => {
-      setupEvents();
-      applyPeopleCountAndLayout(22, 'classic');
+    requestRender(); updateStatus();
+  }
+  maskBusy = false;
+}
+
+/* =========================================================
+ * 6. 사진 불러오기
+ * ========================================================= */
+async function loadImageToCanvas(file) {
+  let img;
+  try { img = await createImageBitmap(file, { imageOrientation: 'from-image' }); }
+  catch (e) {
+    img = await new Promise((res, rej) => {
+      const im = new Image(); im.onload = () => res(im); im.onerror = rej; im.src = URL.createObjectURL(file);
     });
-  </script>
+  }
+  const w = img.width, h = img.height, sc = Math.min(1, SRC_MAX / Math.max(w, h));
+  const c = document.createElement('canvas'); c.width = Math.round(w * sc); c.height = Math.round(h * sc);
+  c.getContext('2d', { willReadFrequently: true }).drawImage(img, 0, 0, c.width, c.height);
+  return c;
+}
+const nextFrame = () => new Promise((r) => requestAnimationFrame(() => r()));
+let loadingMsg = '';
+async function placeFile(file, slot) {
+  loadingMsg = `불러오는 중: ${file.name}`; updateStatus();
+  const src = await loadImageToCanvas(file);
+  const p = { id: ++uid, name: file.name, src, quad: detectBox(src), mask: null, maskStatus: 'none', protrude: state.protrude, tile: null, z: slot };
+  buildTile(p);
+  state.photos[slot] = p;
+  loadingMsg = ''; requestRender(); updateStatus();
+  if (p.protrude) enqueueMask(p);
+  await nextFrame();
+}
+async function addFiles(fileList, targetSlot = null) {
+  let files = [...fileList].filter((f) => f.type.startsWith('image/') || /\.(jpe?g|png|webp|gif|bmp)$/i.test(f.name));
+  if (!files.length) return;
+  if (/\.hei[cf]$/i.test(files[0].name)) alert('HEIC 사진은 브라우저에서 열리지 않을 수 있어요. JPG로 변환해 주세요.');
+  files.sort((a, b) => a.name.localeCompare(b.name, undefined, { numeric: true }));
+  if (targetSlot !== null) {
+    try { await placeFile(files[0], targetSlot); } catch (e) { alert('사진을 열 수 없습니다: ' + files[0].name); }
+    return;
+  }
+  let total = slotCount();
+  const filled = state.photos.slice(0, total).filter(Boolean).length;
+  if (filled + files.length > total && !state.rowsOverride) {
+    setPeople(filled + files.length);
+    total = slotCount();
+  }
+  const empties = [];
+  for (let i = 0; i < total; i++) if (!state.photos[i]) empties.push(i);
+  let extra = Math.max(total, state.photos.length);
+  for (const f of files) {
+    const slot = empties.length ? empties.shift() : extra++;
+    try { await placeFile(f, slot); } catch (e) { console.error(e); alert('사진을 열 수 없습니다: ' + f.name); }
+  }
+}
+
+/* =========================================================
+ * 7. 레이아웃 계산 & 장면 그리기
+ * ========================================================= */
+function computeLayout(W, H) {
+  const rows = getRows(), k = rows.length, maxR = Math.max(...rows);
+  const { ox, oy, aspect } = state;
+  const hasTitle = !!(state.title.trim() || state.subtitle.trim());
+  const titleH = hasTitle ? H * (state.title.trim() && state.subtitle.trim() ? 0.1 : 0.07) : 0;
+  const starSpace = state.deco.star ? H * 0.085 : H * 0.015;
+  const top = H * 0.03 + titleH + starSpace;
+  const bottom = (state.deco.gifts || state.deco.trunk) ? H * 0.80 : H * 0.95;
+  const availW = W * 0.92, availH = bottom - top;
+  const wf = 1 + (maxR - 1) * (1 - ox), hf = aspect * (1 + (k - 1) * (1 - oy));
+  const w = Math.min(availW / wf, availH / hf), h = w * aspect;
+  const treeH = h * (1 + (k - 1) * (1 - oy));
+  const y0 = top + (availH - treeH) * 0.5;
+  const cx = W / 2, slots = [], rowGeom = [];
+  let idx = 0;
+  rows.forEach((cnt, r) => {
+    const y = y0 + r * h * (1 - oy), rowW = w * (1 + (cnt - 1) * (1 - ox)), x0 = cx - rowW / 2;
+    rowGeom.push({ y0: y, y1: y + h, halfW: rowW / 2 });
+    for (let c = 0; c < cnt; c++) slots.push({ x: x0 + c * w * (1 - ox), y, w, h, row: r, col: c, index: idx++ });
+  });
+  const starR = Math.min(w * 0.62, H * 0.065, W * 0.1);
+  const lastY = y0 + (k - 1) * h * (1 - oy);
+  const tw = Math.min(w * 1.15, W * 0.2);
+  return {
+    rows, slots, w, h, rowGeom, y0, titleH,
+    star: { x: cx, y: y0 - starR * 0.45, r: starR },
+    trunk: { x: cx - tw / 2, y: lastY + h * 0.5, w: tw, h: H * 0.97 - (lastY + h * 0.5) },
+  };
+}
+function mulberry32(a) {
+  return function () {
+    a |= 0; a = (a + 0x6D2B79F5) | 0;
+    let t = Math.imul(a ^ (a >>> 15), 1 | a);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+function shade(hex, amt) {
+  const n = parseInt(hex.slice(1), 16);
+  const f = (v) => clamp(Math.round(v + amt * 255), 0, 255);
+  return `rgb(${f(n >> 16)},${f((n >> 8) & 255)},${f(n & 255)})`;
+}
+
+function drawBackground(ctx, W, H) {
+  ctx.fillStyle = state.bg; ctx.fillRect(0, 0, W, H);
+  const g = ctx.createRadialGradient(W / 2, H * 0.4, W * 0.1, W / 2, H * 0.5, Math.max(W, H) * 0.75);
+  g.addColorStop(0, 'rgba(255,255,255,0.07)'); g.addColorStop(1, 'rgba(0,0,0,0.28)');
+  ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+}
+function drawSparkle(ctx, x, y, r, color) {
+  ctx.beginPath();
+  ctx.moveTo(x, y - r);
+  ctx.quadraticCurveTo(x, y, x + r * 0.75, y);
+  ctx.quadraticCurveTo(x, y, x, y + r);
+  ctx.quadraticCurveTo(x, y, x - r * 0.75, y);
+  ctx.quadraticCurveTo(x, y, x, y - r);
+  ctx.fillStyle = color; ctx.fill();
+}
+function drawSwirl(ctx, x, y, len, ang, color, lw, loops) {
+  ctx.save(); ctx.translate(x, y); ctx.rotate(ang);
+  const a = len / (loops * 2 * Math.PI), b = a * 2.3;
+  ctx.beginPath();
+  const steps = 120;
+  for (let i = 0; i <= steps; i++) {
+    const th = (i / steps) * loops * 2 * Math.PI;
+    const px = a * th - b * Math.sin(th) - len / 2, py = -b * Math.cos(th) + b;
+    i ? ctx.lineTo(px, py) : ctx.moveTo(px, py);
+  }
+  ctx.strokeStyle = color; ctx.lineWidth = lw; ctx.lineCap = 'round'; ctx.lineJoin = 'round'; ctx.stroke();
+  ctx.restore();
+}
+function drawDecor(ctx, W, H, L) {
+  const rnd = mulberry32(20261225);
+  const s = W / 1000, cx = W / 2, m = W * 0.035;
+  const items = [];
+  const topLimit = L.titleH ? H * 0.03 + L.titleH : 0;
+  for (let i = 0; i < 600 && items.length < 24; i++) {
+    const x = rnd() * W, y = rnd() * H * 0.84, kind = rnd(), rot = rnd(), sz = rnd();
+    if (y < topLimit + m) continue;
+    let blocked = false;
+    for (const g of L.rowGeom) if (y > g.y0 - m && y < g.y1 + m && Math.abs(x - cx) < g.halfW + m) { blocked = true; break; }
+    if (!blocked && Math.hypot(x - L.star.x, y - L.star.y) < L.star.r * 1.6 + m) blocked = true;
+    if (!blocked && L.trunk && y > L.trunk.y && Math.abs(x - cx) < L.trunk.w / 2 + m) blocked = true;
+    if (blocked || x < m * 0.6 || x > W - m * 0.6) continue;
+    if (items.some((it) => Math.hypot(it.x - x, it.y - y) < W * 0.1)) continue;
+    items.push({ x, y, kind, rot, sz });
+  }
+  const sparkleColors = ['#f7d36b', '#7cc6a4', '#ffffff', '#f7d36b'];
+  items.forEach((it, i) => {
+    if (it.kind < 0.3) {
+      const col = it.rot < 0.5 ? '#ffffff' : '#7cc6a4';
+      drawSwirl(ctx, it.x, it.y, (90 + it.sz * 60) * s, (it.rot - 0.5) * 2.4, col, 7 * s, 3);
+    } else {
+      drawSparkle(ctx, it.x, it.y, (14 + it.sz * 16) * s, sparkleColors[i % 4]);
+    }
+  });
+  // 작은 눈송이 점
+  ctx.fillStyle = 'rgba(255,255,255,0.35)';
+  for (let i = 0; i < 70; i++) {
+    const x = rnd() * W, y = rnd() * H, r = (1.5 + rnd() * 3) * s;
+    ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2); ctx.fill();
+  }
+}
+function drawTitle(ctx, W, H) {
+  const s = W / 1000; let y = H * 0.03;
+  ctx.save(); ctx.textAlign = 'center'; ctx.textBaseline = 'top';
+  if (state.title.trim()) {
+    const fs = 64 * s;
+    ctx.font = `${fs}px Jua, 'Noto Sans KR', sans-serif`;
+    ctx.lineJoin = 'round';
+    ctx.lineWidth = 10 * s; ctx.strokeStyle = '#7a1424'; ctx.strokeText(state.title, W / 2, y);
+    const g = ctx.createLinearGradient(0, y, 0, y + fs); g.addColorStop(0, '#fff6c9'); g.addColorStop(1, '#ffc93c');
+    ctx.fillStyle = g; ctx.fillText(state.title, W / 2, y);
+    y += fs * 1.15;
+  }
+  if (state.subtitle.trim()) {
+    ctx.font = `${34 * s}px Jua, 'Noto Sans KR', sans-serif`;
+    ctx.fillStyle = '#ffffff'; ctx.fillText(state.subtitle, W / 2, y);
+  }
+  ctx.restore();
+}
+function drawStar(ctx, cx, cy, R) {
+  ctx.save();
+  const path = new Path2D();
+  for (let i = 0; i < 10; i++) {
+    const a = -Math.PI / 2 + i * Math.PI / 5, r = i % 2 ? R * 0.48 : R;
+    const x = cx + Math.cos(a) * r, y = cy + Math.sin(a) * r;
+    i ? path.lineTo(x, y) : path.moveTo(x, y);
+  }
+  path.closePath();
+  const g = ctx.createRadialGradient(cx - R * 0.25, cy - R * 0.3, R * 0.1, cx, cy, R * 1.1);
+  g.addColorStop(0, '#fff9c4'); g.addColorStop(0.45, '#ffdb2e'); g.addColorStop(1, '#f2a900');
+  ctx.shadowColor = 'rgba(255,215,80,0.85)'; ctx.shadowBlur = R * 0.5;
+  ctx.fillStyle = g; ctx.strokeStyle = g; ctx.lineWidth = R * 0.2; ctx.lineJoin = 'round';
+  ctx.fill(path); ctx.stroke(path);
+  ctx.shadowBlur = 0;
+  ctx.fillStyle = 'rgba(255,255,255,0.55)';
+  ctx.beginPath(); ctx.ellipse(cx - R * 0.22, cy - R * 0.22, R * 0.16, R * 0.09, -0.6, 0, Math.PI * 2); ctx.fill();
+  ctx.restore();
+}
+function drawTrunk(ctx, t, s) {
+  if (t.h <= 0) return;
+  ctx.save();
+  const g = ctx.createLinearGradient(t.x, 0, t.x + t.w, 0);
+  g.addColorStop(0, '#6e4026'); g.addColorStop(0.35, '#9a6440'); g.addColorStop(0.7, '#86522f'); g.addColorStop(1, '#5c331d');
+  ctx.fillStyle = g;
+  ctx.beginPath(); ctx.roundRect(t.x, t.y, t.w, t.h, t.w * 0.06); ctx.fill();
+  ctx.strokeStyle = 'rgba(60,30,15,0.45)'; ctx.lineWidth = 3 * s; ctx.lineCap = 'round';
+  const rnd = mulberry32(7);
+  for (let i = 1; i < 7; i++) {
+    const x = t.x + t.w * (i / 7) + (rnd() - 0.5) * t.w * 0.04;
+    ctx.beginPath(); ctx.moveTo(x, t.y + t.h * 0.05);
+    ctx.bezierCurveTo(x + t.w * 0.03, t.y + t.h * 0.35, x - t.w * 0.03, t.y + t.h * 0.65, x, t.y + t.h);
+    ctx.stroke();
+  }
+  ctx.restore();
+}
+function drawGift(ctx, cx, yb, w, h, body, ribbon, pattern, s) {
+  ctx.save();
+  const lidH = h * 0.2, bodyTop = yb - h + lidH;
+  // 몸통
+  const g = ctx.createLinearGradient(cx - w / 2, 0, cx + w / 2, 0);
+  g.addColorStop(0, shade(body, 0.06)); g.addColorStop(1, shade(body, -0.12));
+  ctx.fillStyle = g; ctx.fillRect(cx - w / 2, bodyTop, w, yb - bodyTop);
+  if (pattern === 'stripe') {
+    ctx.save(); ctx.beginPath(); ctx.rect(cx - w / 2, bodyTop, w, yb - bodyTop); ctx.clip();
+    ctx.strokeStyle = 'rgba(255,255,255,0.55)'; ctx.lineWidth = w * 0.06;
+    for (let x = -h; x < w + h; x += w * 0.18) { ctx.beginPath(); ctx.moveTo(cx - w / 2 + x, yb); ctx.lineTo(cx - w / 2 + x + h, bodyTop - h * 0.2); ctx.stroke(); }
+    ctx.restore();
+  } else if (pattern === 'dot') {
+    ctx.fillStyle = 'rgba(255,255,255,0.35)';
+    for (let yy = bodyTop + h * 0.08; yy < yb; yy += w * 0.14) for (let xx = cx - w / 2 + w * 0.07; xx < cx + w / 2; xx += w * 0.14) {
+      ctx.beginPath(); ctx.arc(xx, yy, w * 0.025, 0, Math.PI * 2); ctx.fill();
+    }
+  }
+  // 뚜껑
+  ctx.fillStyle = shade(body, 0.1);
+  ctx.fillRect(cx - w * 0.54, yb - h, w * 1.08, lidH);
+  ctx.fillStyle = 'rgba(0,0,0,0.18)'; ctx.fillRect(cx - w / 2, bodyTop, w, h * 0.04);
+  // 리본 띠
+  const rb = w * 0.15;
+  ctx.fillStyle = ribbon; ctx.fillRect(cx - rb / 2, yb - h, rb, h);
+  ctx.fillStyle = shade(ribbon.startsWith('#') ? ribbon : '#cc3333', -0.12);
+  ctx.fillRect(cx + rb * 0.15, yb - h, rb * 0.35, h);
+  // 리본 매듭
+  const ty = yb - h, bw = w * 0.32, bh = h * 0.28;
+  ctx.fillStyle = ribbon; ctx.strokeStyle = shade(ribbon, -0.2); ctx.lineWidth = 2.5 * s;
+  for (const dir of [-1, 1]) {
+    ctx.beginPath();
+    ctx.moveTo(cx, ty);
+    ctx.bezierCurveTo(cx + dir * bw * 1.2, ty - bh * 1.6, cx + dir * bw * 1.4, ty + bh * 0.2, cx, ty);
+    ctx.fill(); ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(cx, ty);
+    ctx.quadraticCurveTo(cx + dir * bw * 0.4, ty + bh * 0.8, cx + dir * bw * 0.7, ty + bh * 1.3);
+    ctx.lineTo(cx + dir * bw * 0.45, ty + bh * 1.2);
+    ctx.quadraticCurveTo(cx + dir * bw * 0.2, ty + bh * 0.6, cx, ty);
+    ctx.fill(); ctx.stroke();
+  }
+  ctx.beginPath(); ctx.ellipse(cx, ty, bw * 0.18, bh * 0.32, 0, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+  ctx.restore();
+}
+function drawGifts(ctx, W, H) {
+  const s = W / 1000;
+  const R = '#c62f2f', G = '#2f7a43', C = '#f1e2c2', Y = '#e0a53a', D = '#8e1f2a';
+  const back = [
+    [0.09, 0.17, 0.15, G, R, ''], [0.27, 0.15, 0.18, C, G, 'dot'],
+    [0.73, 0.15, 0.16, G, Y, ''], [0.91, 0.17, 0.13, R, Y, 'stripe'],
+  ];
+  const front = [
+    [0.03, 0.15, 0.10, C, R, ''], [0.18, 0.17, 0.11, R, Y, ''], [0.35, 0.13, 0.085, G, R, 'dot'],
+    [0.63, 0.15, 0.10, D, G, 'stripe'], [0.80, 0.16, 0.095, C, R, ''], [0.97, 0.14, 0.12, G, R, ''],
+  ];
+  for (const [x, w, h, b, r, pt] of back) drawGift(ctx, x * W, H - W * 0.035, w * W, h * W, b, r, pt, s);
+  for (const [x, w, h, b, r, pt] of front) drawGift(ctx, x * W, H + W * 0.01, w * W, h * W, b, r, pt, s);
+}
+function drawPlaceholder(ctx, sl, num, preview) {
+  ctx.save();
+  const r = sl.w * 0.04;
+  ctx.fillStyle = 'rgba(255,255,255,0.10)';
+  ctx.beginPath(); ctx.roundRect(sl.x, sl.y, sl.w, sl.h, r); ctx.fill();
+  ctx.setLineDash([sl.w * 0.06, sl.w * 0.04]);
+  ctx.strokeStyle = 'rgba(255,226,150,0.85)'; ctx.lineWidth = Math.max(1.5, sl.w * 0.025); ctx.stroke();
+  if (preview) {
+    ctx.fillStyle = 'rgba(255,255,255,0.75)'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.font = `${sl.w * 0.28}px Jua, sans-serif`; ctx.fillText(String(num), sl.x + sl.w / 2, sl.y + sl.h * 0.45);
+    ctx.font = `${sl.w * 0.13}px 'Noto Sans KR', sans-serif`; ctx.fillText('+ 사진', sl.x + sl.w / 2, sl.y + sl.h * 0.68);
+  }
+  ctx.restore();
+}
+function tileRect(sl) {
+  return { x: sl.x - sl.w * TILE_M, y: sl.y - sl.h * TILE_M, w: sl.w * (1 + 2 * TILE_M), h: sl.h * (1 + 2 * TILE_M) };
+}
+function drawTile(ctx, p, sl, alpha = 1) {
+  const r = tileRect(sl);
+  ctx.save();
+  ctx.globalAlpha = alpha;
+  ctx.imageSmoothingQuality = 'high';
+  if (state.shadow) {
+    ctx.shadowColor = 'rgba(0,0,0,0.38)'; ctx.shadowBlur = sl.w * 0.06; ctx.shadowOffsetY = sl.w * 0.025;
+  }
+  ctx.drawImage(p.tile, r.x, r.y, r.w, r.h);
+  ctx.restore();
+}
+function drawOrder(L) {
+  return L.slots.map((s) => s.index).filter((i) => state.photos[i]).sort((a, b) => state.photos[a].z - state.photos[b].z);
+}
+function renderScene(ctx, W, H, preview) {
+  const L = computeLayout(W, H), s = W / 1000;
+  drawBackground(ctx, W, H);
+  if (state.deco.sparkles) drawDecor(ctx, W, H, L);
+  if (state.title.trim() || state.subtitle.trim()) drawTitle(ctx, W, H);
+  if (state.deco.trunk) drawTrunk(ctx, L.trunk, s);
+  L.slots.forEach((sl) => { if (!state.photos[sl.index]) drawPlaceholder(ctx, sl, sl.index + 1, preview); });
+  for (const i of drawOrder(L)) {
+    if (preview && drag.active && drag.from === i) continue;
+    drawTile(ctx, state.photos[i], L.slots[i]);
+  }
+  if (state.deco.star) drawStar(ctx, L.star.x, L.star.y, L.star.r);
+  if (state.deco.gifts) drawGifts(ctx, W, H);
+  if (preview) drawOverlays(ctx, L, s);
+  return L;
+}
+function drawOverlays(ctx, L, s) {
+  ctx.save();
+  for (const sl of L.slots) {
+    const p = state.photos[sl.index];
+    if (p && (p.maskStatus === 'pending' || p.maskStatus === 'running')) {
+      const bx = sl.x + sl.w * 0.08, by = sl.y + sl.h * 0.06, bw = sl.w * 0.84, bh = Math.max(14, sl.w * 0.16);
+      ctx.fillStyle = 'rgba(0,0,0,0.6)'; ctx.beginPath(); ctx.roundRect(bx, by, bw, bh, bh / 2); ctx.fill();
+      ctx.fillStyle = '#ffe08a'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      ctx.font = `${bh * 0.62}px 'Noto Sans KR', sans-serif`;
+      ctx.fillText(p.maskStatus === 'running' ? '누끼 처리중…' : '누끼 대기', bx + bw / 2, by + bh / 2);
+    }
+  }
+  if (state.selected >= 0 && L.slots[state.selected]) {
+    const sl = L.slots[state.selected];
+    ctx.setLineDash([8 * s, 6 * s]); ctx.lineWidth = 4 * s; ctx.strokeStyle = '#ffffff';
+    ctx.strokeRect(sl.x - 3 * s, sl.y - 3 * s, sl.w + 6 * s, sl.h + 6 * s);
+  }
+  if (drag.active) {
+    const t = slotAt(drag.x, drag.y, L);
+    if (t >= 0) {
+      const sl = L.slots[t];
+      ctx.setLineDash([]); ctx.lineWidth = 6 * s; ctx.strokeStyle = '#ffd84d';
+      ctx.strokeRect(sl.x, sl.y, sl.w, sl.h);
+    }
+    const p = state.photos[drag.from], sl0 = L.slots[drag.from];
+    if (p && sl0) drawTile(ctx, p, { ...sl0, x: drag.x - drag.dx, y: drag.y - drag.dy }, 0.8);
+  }
+  ctx.restore();
+}
+
+/* =========================================================
+ * 8. 미리보기 캔버스 & 상호작용
+ * ========================================================= */
+const preview = $('#preview'), pctx = preview.getContext('2d');
+let lastLayout = null, renderPending = false;
+function requestRender() {
+  if (renderPending) return;
+  renderPending = true;
+  requestAnimationFrame(() => { renderPending = false; render(); });
+}
+function fitPreview() {
+  const holder = $('#holder');
+  const aw = holder.clientWidth - 8, ah = holder.clientHeight - 8;
+  let w = aw, h = w * state.posterRatio;
+  if (h > ah) { h = ah; w = h / state.posterRatio; }
+  const dpr = Math.min(2, window.devicePixelRatio || 1);
+  preview.style.width = `${Math.floor(w)}px`; preview.style.height = `${Math.floor(h)}px`;
+  preview.width = Math.max(10, Math.floor(w * dpr)); preview.height = Math.max(10, Math.floor(h * dpr));
+}
+function render() {
+  lastLayout = renderScene(pctx, preview.width, preview.height, true);
+}
+function toCanvasXY(e) {
+  const r = preview.getBoundingClientRect();
+  return [(e.clientX - r.left) * preview.width / r.width, (e.clientY - r.top) * preview.height / r.height];
+}
+function hitTest(x, y) {
+  const L = lastLayout; if (!L) return -1;
+  const order = drawOrder(L).reverse();
+  for (const i of order) {
+    const p = state.photos[i], r = tileRect(L.slots[i]);
+    if (x < r.x || y < r.y || x > r.x + r.w || y > r.y + r.h) continue;
+    const u = Math.floor((x - r.x) / r.w * p.tile.width), v = Math.floor((y - r.y) / r.h * p.tile.height);
+    const a = p.tile.getContext('2d', { willReadFrequently: true }).getImageData(clamp(u, 0, p.tile.width - 1), clamp(v, 0, p.tile.height - 1), 1, 1).data[3];
+    if (a > 30) return i;
+  }
+  return slotAt(x, y, L);
+}
+function slotAt(x, y, L) {
+  let best = -1, bd = Infinity;
+  for (const sl of L.slots) {
+    if (x >= sl.x && x <= sl.x + sl.w && y >= sl.y && y <= sl.y + sl.h) {
+      const d = Math.hypot(x - (sl.x + sl.w / 2), y - (sl.y + sl.h / 2));
+      if (d < bd) { bd = d; best = sl.index; }
+    }
+  }
+  return best;
+}
+const drag = { down: false, active: false, from: -1, sx: 0, sy: 0, x: 0, y: 0, dx: 0, dy: 0 };
+let pendingSlot = null;
+preview.addEventListener('pointerdown', (e) => {
+  const [x, y] = toCanvasXY(e);
+  const i = hitTest(x, y);
+  if (i < 0) { select(-1); return; }
+  if (!state.photos[i]) {
+    pendingSlot = i; $('#slotFileInput').value = ''; $('#slotFileInput').click(); return;
+  }
+  const p = state.photos[i];
+  p.z = ++zTop;                // 클릭 → 맨 앞으로
+  select(i);
+  const sl = lastLayout.slots[i];
+  Object.assign(drag, { down: true, active: false, from: i, sx: x, sy: y, x, y, dx: x - sl.x, dy: y - sl.y });
+  preview.setPointerCapture(e.pointerId);
+});
+preview.addEventListener('pointermove', (e) => {
+  if (!drag.down) return;
+  const [x, y] = toCanvasXY(e);
+  drag.x = x; drag.y = y;
+  if (!drag.active && Math.hypot(x - drag.sx, y - drag.sy) > 8) drag.active = true;
+  if (drag.active) requestRender();
+});
+preview.addEventListener('pointerup', (e) => {
+  if (!drag.down) return;
+  drag.down = false;
+  if (drag.active) {
+    const [x, y] = toCanvasXY(e);
+    const t = slotAt(x, y, lastLayout);
+    if (t >= 0 && t !== drag.from) {
+      const a = state.photos[drag.from], b = state.photos[t];
+      state.photos[t] = a; state.photos[drag.from] = b || null;
+      select(t);
+    }
+  }
+  drag.active = false; requestRender();
+});
+preview.addEventListener('dblclick', (e) => {
+  const [x, y] = toCanvasXY(e);
+  const i = hitTest(x, y);
+  if (i >= 0 && state.photos[i]) openEditor(i);
+});
+function select(i) {
+  state.selected = i;
+  const p = state.photos[i];
+  $('#selBar').classList.toggle('hidden', !p);
+  if (p) { $('#selName').textContent = `${i + 1}번 · ${p.name}`; $('#selProtrude').checked = p.protrude; }
+  requestRender();
+}
+function deleteSelected() {
+  const i = state.selected;
+  if (i < 0 || !state.photos[i]) return;
+  state.photos[i] = null; select(-1); updateStatus();
+}
+
+/* =========================================================
+ * 9. 크롭 편집기
+ * ========================================================= */
+const ed = { p: null, quad: null, f: 1, mode: null, hi: -1, last: null, canvas: $('#edCanvas') };
+ed.ctx = ed.canvas.getContext('2d');
+function openEditor(i) {
+  const p = state.photos[i]; if (!p) return;
+  ed.p = p; ed.quad = p.quad.map((a) => a.slice());
+  $('#edProtrude').checked = p.protrude;
+  $('#editor').classList.remove('hidden');
+  sizeEditor(); drawEditor();
+}
+function closeEditor() { $('#editor').classList.add('hidden'); ed.p = null; }
+function sizeEditor() {
+  if (!ed.p) return;
+  const wrap = $('#edWrap'), src = ed.p.src;
+  const mw = wrap.clientWidth - 20, mh = wrap.clientHeight - 20;
+  ed.f = Math.min(mw / src.width, mh / src.height);
+  const dpr = Math.min(2, window.devicePixelRatio || 1);
+  const cw = src.width * ed.f, ch = src.height * ed.f;
+  ed.canvas.style.width = `${cw}px`; ed.canvas.style.height = `${ch}px`;
+  ed.canvas.width = Math.round(cw * dpr); ed.canvas.height = Math.round(ch * dpr);
+}
+function drawEditor() {
+  if (!ed.p) return;
+  const c = ed.canvas, ctx = ed.ctx, src = ed.p.src, k = c.width / src.width, q = ed.quad;
+  const dpr = c.width / parseFloat(c.style.width);
+  ctx.clearRect(0, 0, c.width, c.height);
+  ctx.drawImage(src, 0, 0, c.width, c.height);
+  ctx.save();
+  ctx.beginPath(); ctx.rect(0, 0, c.width, c.height);
+  q.forEach(([x, y], i) => (i ? ctx.lineTo(x * k, y * k) : ctx.moveTo(x * k, y * k))); ctx.closePath();
+  ctx.fillStyle = 'rgba(0,0,0,0.55)'; ctx.fill('evenodd');
+  ctx.beginPath(); q.forEach(([x, y], i) => (i ? ctx.lineTo(x * k, y * k) : ctx.moveTo(x * k, y * k))); ctx.closePath();
+  ctx.strokeStyle = '#ffd84d'; ctx.lineWidth = 2 * dpr; ctx.stroke();
+  q.forEach(([x, y], i) => {
+    ctx.beginPath(); ctx.arc(x * k, y * k, 9 * dpr, 0, Math.PI * 2);
+    ctx.fillStyle = i === ed.hi ? '#ff5a5f' : '#ffd84d'; ctx.fill();
+    ctx.lineWidth = 2 * dpr; ctx.strokeStyle = '#000'; ctx.stroke();
+  });
+  // 확대 돋보기
+  if (ed.mode === 'corner' && ed.hi >= 0) {
+    const [hx, hy] = q[ed.hi];
+    const size = 170 * dpr, zoom = 3, rad = size / 2;
+    const lx = hx * k < c.width / 2 ? c.width - rad - 12 * dpr : rad + 12 * dpr, ly = rad + 12 * dpr;
+    const srcSize = size / (k * zoom);
+    ctx.save();
+    ctx.beginPath(); ctx.arc(lx, ly, rad, 0, Math.PI * 2); ctx.clip();
+    ctx.fillStyle = '#000'; ctx.fillRect(lx - rad, ly - rad, size, size);
+    ctx.drawImage(src, hx - srcSize / 2, hy - srcSize / 2, srcSize, srcSize, lx - rad, ly - rad, size, size);
+    // 돋보기 안에 테두리선
+    const zk = k * zoom;
+    ctx.beginPath(); q.forEach(([x, y], i) => { const X = lx + (x - hx) * zk, Y = ly + (y - hy) * zk; i ? ctx.lineTo(X, Y) : ctx.moveTo(X, Y); }); ctx.closePath();
+    ctx.strokeStyle = '#ffd84d'; ctx.lineWidth = 2 * dpr; ctx.stroke();
+    ctx.strokeStyle = '#ff5a5f'; ctx.lineWidth = 1.5 * dpr;
+    ctx.beginPath(); ctx.moveTo(lx - 14 * dpr, ly); ctx.lineTo(lx + 14 * dpr, ly); ctx.moveTo(lx, ly - 14 * dpr); ctx.lineTo(lx, ly + 14 * dpr); ctx.stroke();
+    ctx.restore();
+    ctx.beginPath(); ctx.arc(lx, ly, rad, 0, Math.PI * 2); ctx.lineWidth = 3 * dpr; ctx.strokeStyle = '#fff'; ctx.stroke();
+  }
+  ctx.restore();
+}
+function edXY(e) {
+  const r = ed.canvas.getBoundingClientRect();
+  return [(e.clientX - r.left) / ed.f, (e.clientY - r.top) / ed.f];
+}
+function pointInQuad(x, y, q) {
+  let inside = false;
+  for (let i = 0, j = 3; i < 4; j = i++) {
+    const [xi, yi] = q[i], [xj, yj] = q[j];
+    if ((yi > y) !== (yj > y) && x < (xj - xi) * (y - yi) / (yj - yi) + xi) inside = !inside;
+  }
+  return inside;
+}
+ed.canvas.addEventListener('pointerdown', (e) => {
+  const [x, y] = edXY(e), rad = 22 / ed.f;
+  let hi = -1, bd = Infinity;
+  ed.quad.forEach(([qx, qy], i) => { const d = Math.hypot(qx - x, qy - y); if (d < rad && d < bd) { bd = d; hi = i; } });
+  if (hi >= 0) { ed.mode = 'corner'; ed.hi = hi; }
+  else if (pointInQuad(x, y, ed.quad)) { ed.mode = 'move'; ed.hi = -1; }
+  else {
+    // 가장 가까운 모서리를 클릭 위치로 이동
+    ed.quad.forEach(([qx, qy], i) => { const d = Math.hypot(qx - x, qy - y); if (d < bd) { bd = d; hi = i; } });
+    ed.mode = 'corner'; ed.hi = hi; ed.quad[hi] = [x, y];
+  }
+  ed.last = [x, y];
+  ed.canvas.setPointerCapture(e.pointerId);
+  drawEditor();
+});
+ed.canvas.addEventListener('pointermove', (e) => {
+  if (!ed.mode) return;
+  const [x, y] = edXY(e), W = ed.p.src.width, H = ed.p.src.height;
+  if (ed.mode === 'corner') ed.quad[ed.hi] = [clamp(x, 0, W), clamp(y, 0, H)];
+  else {
+    const dx = x - ed.last[0], dy = y - ed.last[1];
+    ed.quad = ed.quad.map(([qx, qy]) => [clamp(qx + dx, 0, W), clamp(qy + dy, 0, H)]);
+  }
+  ed.last = [x, y];
+  drawEditor();
+});
+ed.canvas.addEventListener('pointerup', () => { ed.mode = null; ed.hi = -1; drawEditor(); });
+$('#edAuto').onclick = () => { ed.quad = detectBox(ed.p.src); drawEditor(); };
+$('#edFull').onclick = () => { ed.quad = defaultQuad(ed.p.src.width, ed.p.src.height, 0); drawEditor(); };
+$('#edCancel').onclick = closeEditor;
+$('#edApply').onclick = () => {
+  const p = ed.p; if (!p) return;
+  // 모서리 순서 정리(좌상, 우상, 우하, 좌하)
+  const q = ed.quad.slice(), cx = q.reduce((s, a) => s + a[0], 0) / 4, cy = q.reduce((s, a) => s + a[1], 0) / 4;
+  q.sort((a, b) => Math.atan2(a[1] - cy, a[0] - cx) - Math.atan2(b[1] - cy, b[0] - cx));
+  let start = 0, bs = Infinity;
+  q.forEach(([x, y], i) => { if (x + y < bs) { bs = x + y; start = i; } });
+  p.quad = [0, 1, 2, 3].map((i) => q[(start + i) % 4]);
+  p.protrude = $('#edProtrude').checked;
+  buildTile(p);
+  if (p.protrude && !p.mask) enqueueMask(p);
+  closeEditor(); select(state.selected); requestRender();
+};
+
+/* =========================================================
+ * 10. 상태 표시 & 컨트롤 연결
+ * ========================================================= */
+function updateStatus() {
+  const total = slotCount();
+  const inSlots = state.photos.slice(0, total).filter(Boolean);
+  const hidden = state.photos.slice(total).filter(Boolean).length;
+  const pend = state.photos.filter((p) => p && (p.maskStatus === 'pending' || p.maskStatus === 'running')).length;
+  const lines = [`사진 ${inSlots.length} / ${total}칸`];
+  if (loadingMsg) lines.push(loadingMsg);
+  if (pend) lines.push(`AI 누끼 처리 남음: ${pend}장 ${modelProgress ? '· ' + modelProgress : ''}`);
+  if (bgrUnavailable) lines.push('⚠ AI 누끼를 불러오지 못해 상자 크롭만 적용했어요 (인터넷 연결 확인)');
+  if (hidden) lines.push(`⚠ 칸이 부족해 숨겨진 사진 ${hidden}장 (인원 수를 늘려주세요)`);
+  $('#status').textContent = lines.join('\n');
+}
+function renderRowsView() {
+  const rows = getRows();
+  const v = $('#rowsView'); v.innerHTML = '';
+  for (const r of rows) {
+    const d = document.createElement('div'); d.className = 'r';
+    for (let i = 0; i < r; i++) d.appendChild(document.createElement('i'));
+    v.appendChild(d);
+  }
+  const lbl = document.createElement('div'); lbl.className = 'lbl';
+  lbl.textContent = rows.join(' · ') + `  (총 ${slotCount()}칸)`;
+  v.appendChild(lbl);
+  $('#rowsHint').textContent = state.rowsOverride
+    ? (slotCount() !== state.n ? `직접 지정한 칸 수(${slotCount()})가 인원(${state.n})과 달라요.` : '직접 지정한 배치를 사용 중입니다.')
+    : '';
+}
+function setPeople(n) {
+  state.n = clamp(n | 0, 1, 100);
+  $('#peopleNum').value = state.n;
+  $('#peopleRange').max = Math.max(60, state.n);
+  $('#peopleRange').value = state.n;
+  renderRowsView(); updateStatus(); requestRender();
+}
+$('#peopleNum').addEventListener('input', (e) => { if (e.target.value) setPeople(+e.target.value); });
+$('#peopleRange').addEventListener('input', (e) => setPeople(+e.target.value));
+$('#rowsOverride').addEventListener('input', (e) => {
+  const arr = e.target.value.split(/[^0-9]+/).filter(Boolean).map(Number).filter((x) => x > 0 && x < 40);
+  state.rowsOverride = arr.length ? arr : null;
+  renderRowsView(); updateStatus(); requestRender();
+});
+const bindSlider = (id, key, fmt, scale) => {
+  const el = $('#' + id), out = $('#' + id + 'Val');
+  const upd = () => { state[key] = el.value / scale; out.textContent = fmt(state[key]); requestRender(); };
+  el.addEventListener('input', upd); upd();
+};
+bindSlider('ox', 'ox', (v) => `${Math.round(v * 100)}%`, 100);
+bindSlider('oy', 'oy', (v) => `${Math.round(v * 100)}%`, 100);
+(() => {
+  const el = $('#aspect'), out = $('#aspVal');
+  const upd = () => { state.aspect = el.value / 100; out.textContent = `1 : ${state.aspect.toFixed(2)}`; requestRender(); };
+  el.addEventListener('input', upd); upd();
+})();
+$('#shadow').onchange = (e) => { state.shadow = e.target.checked; requestRender(); };
+$('#protrude').onchange = (e) => {
+  state.protrude = e.target.checked;
+  state.photos.forEach((p) => {
+    if (!p) return;
+    p.protrude = state.protrude;
+    buildTile(p);
+    if (p.protrude && !p.mask) enqueueMask(p);
+  });
+  requestRender(); updateStatus();
+};
+$('#bgColor').oninput = (e) => { state.bg = e.target.value; requestRender(); };
+document.querySelectorAll('.swatch').forEach((b) => b.onclick = () => { state.bg = b.dataset.c; $('#bgColor').value = b.dataset.c; requestRender(); });
+$('#poster').onchange = (e) => { state.posterRatio = +e.target.value; fitPreview(); requestRender(); };
+$('#title').oninput = (e) => { state.title = e.target.value; requestRender(); };
+$('#subtitle').oninput = (e) => { state.subtitle = e.target.value; requestRender(); };
+[['dStar', 'star'], ['dTrunk', 'trunk'], ['dGifts', 'gifts'], ['dSparkle', 'sparkles']].forEach(([id, k]) => {
+  $('#' + id).onchange = (e) => { state.deco[k] = e.target.checked; requestRender(); };
+});
+$('#fileInput').onchange = (e) => { addFiles(e.target.files); e.target.value = ''; };
+$('#slotFileInput').onchange = (e) => {
+  if (pendingSlot !== null && e.target.files.length) addFiles(e.target.files, pendingSlot).then(() => select(pendingSlot));
+};
+$('#clearAll').onclick = () => {
+  if (!state.photos.some(Boolean) || confirm('모든 사진을 지울까요?')) { state.photos = []; maskQueue.length = 0; select(-1); updateStatus(); }
+};
+$('#selEdit').onclick = () => openEditor(state.selected);
+$('#selReplace').onclick = () => { pendingSlot = state.selected; $('#slotFileInput').value = ''; $('#slotFileInput').click(); };
+$('#selDelete').onclick = deleteSelected;
+$('#selProtrude').onchange = (e) => {
+  const p = state.photos[state.selected]; if (!p) return;
+  p.protrude = e.target.checked; buildTile(p);
+  if (p.protrude && !p.mask) enqueueMask(p);
+  requestRender(); updateStatus();
+};
+document.addEventListener('keydown', (e) => {
+  if (!$('#editor').classList.contains('hidden')) {
+    if (e.key === 'Escape') closeEditor();
+    if (e.key === 'Enter') $('#edApply').click();
+    return;
+  }
+  if (e.target.matches('input, select, textarea')) return;
+  if (e.key === 'Delete' || e.key === 'Backspace') deleteSelected();
+  if (e.key === 'Escape') select(-1);
+});
+
+// 드래그 앤 드롭 업로드
+const stage = $('#stage');
+['dragenter', 'dragover'].forEach((t) => stage.addEventListener(t, (e) => {
+  if (e.dataTransfer && [...e.dataTransfer.types].includes('Files')) { e.preventDefault(); $('#dropOverlay').classList.add('show'); }
+}));
+['dragleave', 'drop'].forEach((t) => stage.addEventListener(t, (e) => {
+  if (t === 'dragleave' && stage.contains(e.relatedTarget)) return;
+  $('#dropOverlay').classList.remove('show');
+}));
+stage.addEventListener('drop', (e) => { e.preventDefault(); if (e.dataTransfer.files.length) addFiles(e.dataTransfer.files); });
+
+// 고해상도 저장
+$('#download').onclick = async () => {
+  const btn = $('#download'); btn.disabled = true; btn.textContent = '이미지 만드는 중…';
+  await nextFrame();
+  try {
+    await document.fonts.ready;
+    const W = +$('#exportSize').value, H = Math.round(W * state.posterRatio);
+    const fmt = $('#exportFmt').value;
+    const c = document.createElement('canvas'); c.width = W; c.height = H;
+    renderScene(c.getContext('2d'), W, H, false);
+    const blob = await new Promise((r) => c.toBlob(r, `image/${fmt}`, 0.95));
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = `박스트리_${W}x${H}.${fmt === 'jpeg' ? 'jpg' : 'png'}`;
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(a.href), 10000);
+  } catch (e) {
+    console.error(e); alert('저장 중 오류가 발생했습니다: ' + e.message);
+  } finally {
+    btn.disabled = false; btn.textContent = '⬇ 이미지 다운로드';
+  }
+};
+
+window.addEventListener('resize', () => { fitPreview(); requestRender(); if (ed.p) { sizeEditor(); drawEditor(); } });
+window.addEventListener('beforeunload', (e) => { if (state.photos.some(Boolean)) { e.preventDefault(); e.returnValue = ''; } });
+
+// 시작
+fitPreview(); setPeople(18); updateStatus();
+document.fonts && document.fonts.ready.then(() => requestRender());
+</script>
 </body>
 </html>
