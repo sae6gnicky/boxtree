@@ -185,20 +185,20 @@
 
         <!-- 일괄 처리 버튼 -->
         <div class="grid grid-cols-2 gap-2">
-          <button id="btnBatchAiBg" type="button"
-            class="py-2.5 px-2.5 rounded-xl text-xs font-bold bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-700 hover:to-violet-700 text-white shadow-sm transition flex items-center justify-center gap-1 disabled:opacity-50">
-            <span>📦</span>
-            <span>AI 박스 크롭+발 누끼</span>
-          </button>
           <button id="btnBatchFastBg" type="button"
-            class="py-2.5 px-2.5 rounded-xl text-xs font-bold bg-slate-800 hover:bg-slate-900 text-white shadow-sm transition flex items-center justify-center gap-1 disabled:opacity-50">
+            class="py-2.5 px-2.5 rounded-xl text-xs font-bold bg-gradient-to-r from-rose-600 to-red-600 hover:from-rose-700 hover:to-red-700 text-white shadow-sm transition flex items-center justify-center gap-1 disabled:opacity-50">
             <span>✂️</span>
-            <span>AI 박스 크롭만</span>
+            <span>자동 반짝이 크롭 (일괄)</span>
+          </button>
+          <button id="btnBatchAiBg" type="button"
+            class="py-2.5 px-2.5 rounded-xl text-xs font-bold bg-slate-800 hover:bg-slate-900 text-white shadow-sm transition flex items-center justify-center gap-1 disabled:opacity-50">
+            <span>🪄</span>
+            <span>외곽 배경 정리 (일괄)</span>
           </button>
         </div>
 
         <div class="flex items-center justify-between gap-2 text-[11px] text-slate-500 bg-slate-50 rounded-xl px-3 py-2 border border-slate-100">
-          <span>💡 각 사진을 클릭하면 <b>수동 박스 크롭·지우개·크기 보정</b>이 열립니다.</span>
+          <span>💡 1번 사진에서 <b>4점 크롭</b>을 맞춘 뒤 <b>전체 일괄 적용</b>도 가능합니다.</span>
           <button id="btnClearAllPhotos" type="button" class="text-rose-600 font-bold shrink-0 hover:underline">전체 비우기</button>
         </div>
 
@@ -418,16 +418,21 @@
           <div class="space-y-3.5">
             <!-- 원클릭 자동 박스 크롭 -->
             <div class="space-y-2">
-              <p class="text-xs font-bold text-slate-700">1. AI 자동 박스 크롭 &amp; 누끼</p>
-              <button id="btnEditorAiRemove" type="button"
-                class="w-full py-2.5 px-3 rounded-xl text-xs font-bold bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-700 hover:to-violet-700 text-white shadow-sm transition flex items-center justify-center gap-1.5">
-                <span>📦</span>
-                <span>AI 박스 크롭 + 튀어나온 발/손 누끼</span>
-              </button>
+              <p class="text-xs font-bold text-slate-700">1. 자동 반짝이 크롭 &amp; 전체 일괄 적용</p>
               <button id="btnEditorAutoCorner" type="button"
+                class="w-full py-2.5 px-3 rounded-xl text-xs font-bold bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-700 hover:to-violet-700 text-white shadow-sm transition flex items-center justify-center gap-1.5">
+                <span>🎯</span>
+                <span>반짝이 테두리 4점 자동 맞추기</span>
+              </button>
+              <button id="btnEditorApplyAllCrop" type="button"
+                class="w-full py-2 px-3 rounded-xl text-xs font-bold bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm transition flex items-center justify-center gap-1.5">
+                <span>📋</span>
+                <span>현재 4점 크롭을 전체 사진에 일괄 적용</span>
+              </button>
+              <button id="btnEditorAiRemove" type="button"
                 class="w-full py-2 px-3 rounded-xl text-xs font-bold bg-slate-800 hover:bg-slate-900 text-white transition flex items-center justify-center gap-1.5">
-                <span>✂️</span>
-                <span>AI 상자 형태로만 깔끔하게 크롭</span>
+                <span>🪄</span>
+                <span>외곽 배경 자동 정리 (박스 내부 보호)</span>
               </button>
             </div>
 
@@ -625,6 +630,7 @@
       editorToolHint: document.getElementById('editorToolHint'),
       btnEditorAiRemove: document.getElementById('btnEditorAiRemove'),
       btnEditorAutoCorner: document.getElementById('btnEditorAutoCorner'),
+      btnEditorApplyAllCrop: document.getElementById('btnEditorApplyAllCrop'),
       btnEditorUndo: document.getElementById('btnEditorUndo'),
       btnEditorResetBg: document.getElementById('btnEditorResetBg'),
       cropActionBar: document.getElementById('cropActionBar'),
@@ -1053,38 +1059,181 @@
       // 좌우/상하 역전 방지 정렬
       if (tl.x > tr.x) { const tmp = tl.x; tl.x = tr.x; tr.x = tmp; }
       if (bl.x > br.x) { const tmp = bl.x; bl.x = br.x; br.x = tmp; }
-      if (tl.y > bl.y) { const tmp = tl.y; tl.y = bl.y; bl.y = tmp; }
-      if (tr.y > br.y) { const tmp = tr.y; tr.y = br.y; br.y = tmp; }
+    // ======================== 5. 로컬 반짝이 박스 자동 감지 & 크롭 엔진 (100% 브라우저 처리) ========================
 
-      if (tr.x - tl.x < 20 || br.x - bl.x < 20 || bl.y - tl.y < 20 || br.y - tr.y < 20) {
-        throw new Error('인식된 상자 영역이 너무 작습니다.');
+    /**
+     * 100% 로컬 컴퓨터 비전으로 사진 속 크리스마스 가랜드(초록/흰색/금색 모루)
+     * 테두리의 4개 꼭짓점(사다리꼴)을 즉시 감지합니다. (외부 API 불필요, 실패 없음)
+     */
+    function detectBoxQuadLocally(sourceCanvas) {
+      const maxDim = 260;
+      const scale = Math.min(1, maxDim / Math.max(sourceCanvas.width, sourceCanvas.height));
+      const w = Math.max(40, Math.round(sourceCanvas.width * scale));
+      const h = Math.max(40, Math.round(sourceCanvas.height * scale));
+
+      const tmp = document.createElement('canvas');
+      tmp.width = w;
+      tmp.height = h;
+      const ctx = tmp.getContext('2d', { willReadFrequently: true });
+      ctx.drawImage(sourceCanvas, 0, 0, w, h);
+      const data = ctx.getImageData(0, 0, w, h).data;
+
+      // 1) 픽셀별 밝기, 초록 가랜드 점수, 고주파 텍스처(반짝이) 점수 계산
+      const lum = new Float32Array(w * h);
+      const greenMap = new Float32Array(w * h);
+      const scoreMap = new Float32Array(w * h);
+      let greenPixelCount = 0;
+
+      for (let i = 0; i < w * h; i++) {
+        const idx = i * 4;
+        const r = data[idx], g = data[idx + 1], b = data[idx + 2];
+        lum[i] = 0.299 * r + 0.587 * g + 0.114 * b;
+
+        // 초록 가랜드(모루) 또는 빨간 오너먼트 감지
+        const gDiff = g - Math.max(r, b);
+        if (gDiff > 6 && g > 28 && g < 210) {
+          greenMap[i] = Math.min(1, gDiff / 35);
+          greenPixelCount++;
+        } else if (r - Math.max(g, b) > 45 && r > 90) {
+          greenMap[i] = 0.55;
+        }
       }
 
-      const quad = { tl, tr, br, bl };
-      const qMinX = Math.floor(Math.min(tl.x, bl.x));
-      const qMaxX = Math.ceil(Math.max(tr.x, br.x));
-      const qMinY = Math.floor(Math.min(tl.y, tr.y));
-      const qMaxY = Math.ceil(Math.max(bl.y, br.y));
+      const isGreenGarland = (greenPixelCount / (w * h)) > 0.025;
 
-      const pLeft = typeof parsed.protrude_left_x === 'number'
-        ? Math.floor((parsed.protrude_left_x / 1000) * sourceCanvas.width)
-        : qMinX;
-      const pRight = typeof parsed.protrude_right_x === 'number'
-        ? Math.ceil((parsed.protrude_right_x / 1000) * sourceCanvas.width)
-        : qMaxX;
-      const pBottom = typeof parsed.protrude_bottom_y === 'number'
-        ? Math.ceil((parsed.protrude_bottom_y / 1000) * sourceCanvas.height)
-        : qMaxY;
+      for (let y = 1; y < h - 1; y++) {
+        for (let x = 1; x < w - 1; x++) {
+          const p = y * w + x;
+          const gx = Math.abs(lum[p + 1] - lum[p - 1]);
+          const gy = Math.abs(lum[p + w] - lum[p - w]);
+          const edge = Math.min(1, (gx + gy) / 140);
 
-      const sx = Math.max(0, Math.min(qMinX, pLeft));
-      const sy = qMinY;
-      const sx2 = Math.min(sourceCanvas.width, Math.max(qMaxX, pRight));
-      const sy2 = Math.min(sourceCanvas.height, Math.max(qMaxY, pBottom));
+          if (isGreenGarland) {
+            scoreMap[p] = greenMap[p] * 2.8 + edge * 0.45;
+          } else {
+            // 흰색/은색/금색 반짝이 모루: 밝으면서 거친 고주파 텍스처
+            const brightBoost = lum[p] > 145 ? 1.7 : 0.65;
+            scoreMap[p] = edge * brightBoost;
+          }
+        }
+      }
 
+      // 1차원 배열 이동평균 스무딩
+      const smooth = (arr, radius) => {
+        const out = new Float32Array(arr.length);
+        for (let i = 0; i < arr.length; i++) {
+          let sum = 0, cnt = 0;
+          for (let d = -radius; d <= radius; d++) {
+            const j = i + d;
+            if (j >= 0 && j < arr.length) { sum += arr[j]; cnt++; }
+          }
+          out[i] = sum / (cnt || 1);
+        }
+        return out;
+      };
+
+      // 2) 상단 가랜드 수평선(topY) 찾기 (중앙 22% ~ 78% 구간)
+      const rowProfile = new Float32Array(h);
+      const xStart = Math.floor(w * 0.22);
+      const xEnd = Math.floor(w * 0.78);
+      for (let y = 0; y < h; y++) {
+        let s = 0;
+        for (let x = xStart; x < xEnd; x++) s += scoreMap[y * w + x];
+        rowProfile[y] = s / (xEnd - xStart);
+      }
+      const rowSmooth = smooth(rowProfile, 3);
+
+      let topPeakY = Math.floor(h * 0.12);
+      let topPeakVal = -1;
+      for (let y = Math.floor(h * 0.02); y < Math.floor(h * 0.52); y++) {
+        if (rowSmooth[y] > topPeakVal) {
+          topPeakVal = rowSmooth[y];
+          topPeakY = y;
+        }
+      }
+
+      // 피크에서 위로 올라가며 가랜드 바깥쪽 상단 경계 찾기
+      let topY = topPeakY;
+      for (let y = topPeakY; y >= 2; y--) {
+        if (rowSmooth[y] < topPeakVal * 0.32) {
+          topY = y;
+          break;
+        }
+        topY = y;
+      }
+      topY = Math.max(0, topY - Math.round(h * 0.015));
+
+      // 3) 좌우 가랜드 수직선(상단 절반 / 하단 절반 분리해 사다리꼴 원근감 반영)
+      const findSideBounds = (y1, y2) => {
+        const colProfile = new Float32Array(w);
+        const ry1 = Math.max(0, Math.min(h - 1, Math.floor(y1)));
+        const ry2 = Math.max(ry1 + 1, Math.min(h, Math.floor(y2)));
+        for (let x = 0; x < w; x++) {
+          let s = 0;
+          for (let y = ry1; y < ry2; y++) s += scoreMap[y * w + x];
+          colProfile[x] = s / (ry2 - ry1);
+        }
+        const colSmooth = smooth(colProfile, 3);
+
+        // 왼쪽 기둥 (2% ~ 44%)
+        let lPeakX = Math.floor(w * 0.14), lPeakVal = -1;
+        for (let x = Math.floor(w * 0.02); x < Math.floor(w * 0.44); x++) {
+          if (colSmooth[x] > lPeakVal) { lPeakVal = colSmooth[x]; lPeakX = x; }
+        }
+        let leftX = lPeakX;
+        for (let x = lPeakX; x >= 1; x--) {
+          if (colSmooth[x] < lPeakVal * 0.30) { leftX = x; break; }
+          leftX = x;
+        }
+        leftX = Math.max(0, leftX - Math.round(w * 0.012));
+
+        // 오른쪽 기둥 (56% ~ 98%)
+        let rPeakX = Math.floor(w * 0.86), rPeakVal = -1;
+        for (let x = Math.floor(w * 0.56); x < Math.floor(w * 0.98); x++) {
+          if (colSmooth[x] > rPeakVal) { rPeakVal = colSmooth[x]; rPeakX = x; }
+        }
+        let rightX = rPeakX;
+        for (let x = rPeakX; x < w - 1; x++) {
+          if (colSmooth[x] < rPeakVal * 0.30) { rightX = x; break; }
+          rightX = x;
+        }
+        rightX = Math.min(w - 1, rightX + Math.round(w * 0.012));
+
+        return { leftX, rightX };
+      };
+
+      const midY = Math.min(h - 10, topY + Math.round((h - topY) * 0.48));
+      const upperSides = findSideBounds(topY + h * 0.04, midY);
+      const lowerSides = findSideBounds(midY, h * 0.94);
+
+      // 이상치 보정 (상/하단 좌우 폭이 비정상적으로 어긋나면 평균화)
+      let tlx = upperSides.leftX;
+      let trx = upperSides.rightX;
+      let blx = lowerSides.leftX;
+      let brx = lowerSides.rightX;
+
+      if (Math.abs(tlx - blx) > w * 0.14) {
+        const avg = Math.min(tlx, blx);
+        tlx = avg; blx = avg;
+      }
+      if (Math.abs(trx - brx) > w * 0.14) {
+        const avg = Math.max(trx, brx);
+        trx = avg; brx = avg;
+      }
+
+      // 최소 너비 보장
+      if (trx - tlx < w * 0.35) { tlx = w * 0.12; trx = w * 0.88; }
+      if (brx - blx < w * 0.35) { blx = w * 0.10; brx = w * 0.90; }
+
+      // 하단 경계 (대부분 박스 바닥이나 아이의 다리가 하단에 위치하므로 98% 유지)
+      const bottomY = Math.min(h - 1, Math.round(h * 0.985));
+
+      const inv = 1 / scale;
       return {
-        quad,
-        quadBounds: { x: qMinX, y: qMinY, w: Math.max(30, qMaxX - qMinX), h: Math.max(30, qMaxY - qMinY) },
-        subject: { x: sx, y: sy, w: Math.max(30, sx2 - sx), h: Math.max(30, sy2 - sy) },
+        tl: { x: Math.round(tlx * inv), y: Math.round(topY * inv) },
+        tr: { x: Math.round(trx * inv), y: Math.round(topY * inv) },
+        br: { x: Math.round(brx * inv), y: Math.round(bottomY * inv) },
+        bl: { x: Math.round(blx * inv), y: Math.round(bottomY * inv) },
       };
     }
 
@@ -1114,182 +1263,39 @@
       return out;
     }
 
-    /** [모드 1] AI 반짝이 테두리(사다리꼴)를 따라 깔끔하게 크롭 */
-    async function cropToBoxOnlyWithAI(sourceCanvas) {
-      const { quad } = await detectBoxAndSubjectWithGemini(sourceCanvas);
+    /** [모드 1] 100% 로컬 자동 반짝이 테두리 크롭 */
+    function cropToBoxOnlyLocally(sourceCanvas) {
+      const quad = detectBoxQuadLocally(sourceCanvas);
       return clipCanvasByQuad(sourceCanvas, quad);
     }
 
-    /** [모드 2] AI 반짝이 테두리 크롭 + 박스 밖 튀어나온 발/손만 누끼 */
-    async function removeBackgroundWithGeminiAI(sourceCanvas) {
-      const { quad, quadBounds, subject } = await detectBoxAndSubjectWithGemini(sourceCanvas);
+    /** [모드 2] 100% 로컬 외곽 배경 정리 (중앙 72% 박스 내부 보호 + 4모서리 외곽 제거) */
+    function cleanOuterBackgroundLocally(sourceCanvas, tolerance = 34) {
+      const work = cloneCanvas(sourceCanvas);
+      const w = work.width, h = work.height;
+      const seeds = [
+        [2, 2], [w - 3, 2], [2, h - 3], [w - 3, h - 3],
+        [Math.floor(w / 2), 2], [2, Math.floor(h / 2)], [w - 3, Math.floor(h / 2)]
+      ];
+      seeds.forEach(([sx, sy]) => floodFillErase(work, sx, sy, tolerance));
 
-      // 튀어나온 발/손 영역이 거의 없으면 바로 반짝이 사다리꼴 크롭만 반환
-      const extraAreaRatio = 1 - (quadBounds.w * quadBounds.h) / (subject.w * subject.h);
-      if (extraAreaRatio < 0.03) {
-        return clipCanvasByQuad(sourceCanvas, quad);
-      }
-
-      const croppedCanvas = document.createElement('canvas');
-      croppedCanvas.width = subject.w;
-      croppedCanvas.height = subject.h;
-      croppedCanvas.getContext('2d', { willReadFrequently: true }).drawImage(
-        sourceCanvas, subject.x, subject.y, subject.w, subject.h, 0, 0, subject.w, subject.h
-      );
-
-      // 반짝이 4점 다각형 내부 마스크 생성 (이 영역은 100% 보호)
-      const quadMaskCanvas = document.createElement('canvas');
-      quadMaskCanvas.width = subject.w;
-      quadMaskCanvas.height = subject.h;
-      const qmCtx = quadMaskCanvas.getContext('2d', { willReadFrequently: true });
-      qmCtx.fillStyle = '#ffffff';
-      qmCtx.beginPath();
-      qmCtx.moveTo(quad.tl.x - subject.x, quad.tl.y - subject.y);
-      qmCtx.lineTo(quad.tr.x - subject.x, quad.tr.y - subject.y);
-      qmCtx.lineTo(quad.br.x - subject.x, quad.br.y - subject.y);
-      qmCtx.lineTo(quad.bl.x - subject.x, quad.bl.y - subject.y);
-      qmCtx.closePath();
-      qmCtx.fill();
-      const quadMaskData = qmCtx.getImageData(0, 0, subject.w, subject.h).data;
-
-      // 반짝이 상단보다 위쪽 또는 상단 65% 좌우 바깥은 교실 문이므로 무조건 제거할 기준선
-      const lowerProtrudeY = Math.round((Math.min(quad.bl.y, quad.br.y) - subject.y) * 0.65);
-
-      let maskCanvas = null;
-      try {
-        const sendCanvas = document.createElement('canvas');
-        const maxSend = 768;
-        const ratio = Math.min(1, maxSend / Math.max(croppedCanvas.width, croppedCanvas.height));
-        sendCanvas.width = Math.round(croppedCanvas.width * ratio);
-        sendCanvas.height = Math.round(croppedCanvas.height * ratio);
-        sendCanvas.getContext('2d').drawImage(croppedCanvas, 0, 0, sendCanvas.width, sendCanvas.height);
-
-        const base64Data = sendCanvas.toDataURL('image/png').split(',')[1];
-        const prompt = [
-          "Keep the decorated Christmas box (with its green/white/gold garland border) and the person's protruding feet/legs/hands completely intact.",
-          "Replace ALL classroom background outside the garland border (walls, doors, floor, shelves) with solid flat bright magenta (#FF00FF).",
-          "Keep exact framing and dimensions."
-        ].join(' ');
-
-        const payload = {
-          contents: [{
-            role: "user",
-            parts: [
-              { text: prompt },
-              { inlineData: { mimeType: "image/png", data: base64Data } }
-            ]
-          }],
-          generationConfig: { responseModalities: ['IMAGE'] }
-        };
-
-        const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-flash-image:generateContent?key=${apiKey}`;
-        const response = await fetchWithRetry(apiUrl, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(payload)
-        });
-        const result = await response.json();
-        const part = result?.candidates?.[0]?.content?.parts?.find(p => p.inlineData);
-
-        if (part && part.inlineData?.data) {
-          const aiImg = await new Promise((resolve, reject) => {
-            const img = new Image();
-            img.onload = () => resolve(img);
-            img.onerror = reject;
-            img.src = `data:${part.inlineData.mimeType || 'image/png'};base64,${part.inlineData.data}`;
-          });
-
-          const temp = document.createElement('canvas');
-          temp.width = croppedCanvas.width;
-          temp.height = croppedCanvas.height;
-          temp.getContext('2d', { willReadFrequently: true }).drawImage(
-            aiImg, 0, 0, croppedCanvas.width, croppedCanvas.height
-          );
-          const removed = keyOutOuterMagenta(temp);
-          if (removed > 0.005 && removed < 0.75) {
-            maskCanvas = temp;
-          }
-        }
-      } catch (err) {
-        console.warn('AI 발 누끼 폴백 사용:', err);
-      }
-
-      if (!maskCanvas) {
-        maskCanvas = cloneCanvas(croppedCanvas);
-        const mw = maskCanvas.width, mh = maskCanvas.height;
-        [[2, 2], [mw - 3, 2], [2, mh - 3], [mw - 3, mh - 3]].forEach(([cx, cy]) => {
-          floodFillErase(maskCanvas, cx, cy, 38);
-        });
-      }
-
-      const finalCanvas = cloneCanvas(croppedCanvas);
-      const fCtx = finalCanvas.getContext('2d', { willReadFrequently: true });
-      const w = finalCanvas.width;
-      const h = finalCanvas.height;
-      const origImg = fCtx.getImageData(0, 0, w, h);
-      const maskData = maskCanvas.getContext('2d', { willReadFrequently: true })
-        .getImageData(0, 0, w, h).data;
-
-      for (let y = 0; y < h; y++) {
-        for (let x = 0; x < w; x++) {
-          const aIdx = (y * w + x) * 4 + 3;
-          // 반짝이 다각형 안쪽은 100% 원본 보호
-          if (quadMaskData[aIdx] > 128) continue;
-          // 반짝이 다각형 바깥이면서 상단 영역(교실 문/벽 위치)은 무조건 투명 처리
-          if (y < lowerProtrudeY) {
-            origImg.data[aIdx] = 0;
-          } else {
-            // 하단 튀어나온 발/다리 영역만 누끼 마스크 적용
-            origImg.data[aIdx] = maskData[aIdx];
-          }
-        }
-      }
-
-      fCtx.putImageData(origImg, 0, 0);
-      removeSmallIslands(finalCanvas);
-      return trimTransparentCanvas(finalCanvas);
-    }
-
-    function keyOutOuterMagenta(canvas) {
-      const ctx = canvas.getContext('2d', { willReadFrequently: true });
-      const w = canvas.width, h = canvas.height;
+      // 박스 중앙 영역은 원본 픽셀로 안전 복구 (아이 얼굴/옷 구멍 방지)
+      const ctx = work.getContext('2d', { willReadFrequently: true });
+      const origData = sourceCanvas.getContext('2d', { willReadFrequently: true }).getImageData(0, 0, w, h).data;
       const imgData = ctx.getImageData(0, 0, w, h);
       const data = imgData.data;
-      const visited = new Uint8Array(w * h);
-      const stack = [];
 
-      const isMagenta = (idx) => {
-        const r = data[idx], g = data[idx + 1], b = data[idx + 2], a = data[idx + 3];
-        if (a < 20) return true;
-        return (r > 135 && b > 125 && g < 130 && (r - g) > 45 && (b - g) > 35);
-      };
-
-      const pushIf = (x, y) => {
-        const pos = y * w + x;
-        if (!visited[pos] && isMagenta(pos * 4)) {
-          visited[pos] = 1;
-          stack.push(x, y);
+      const safeX1 = Math.floor(w * 0.16), safeX2 = Math.ceil(w * 0.84);
+      const safeY1 = Math.floor(h * 0.14), safeY2 = Math.ceil(h * 0.88);
+      for (let y = safeY1; y < safeY2; y++) {
+        for (let x = safeX1; x < safeX2; x++) {
+          const aIdx = (y * w + x) * 4 + 3;
+          if (origData[aIdx] > 20) data[aIdx] = origData[aIdx];
         }
-      };
-
-      for (let x = 0; x < w; x++) { pushIf(x, 0); pushIf(x, h - 1); }
-      for (let y = 0; y < h; y++) { pushIf(0, y); pushIf(w - 1, y); }
-
-      let cleared = 0;
-      while (stack.length > 0) {
-        const y = stack.pop();
-        const x = stack.pop();
-        const idx = (y * w + x) * 4;
-        data[idx + 3] = 0;
-        cleared++;
-        if (x > 0) pushIf(x - 1, y);
-        if (x < w - 1) pushIf(x + 1, y);
-        if (y > 0) pushIf(x, y - 1);
-        if (y < h - 1) pushIf(x, y + 1);
       }
-
       ctx.putImageData(imgData, 0, 0);
-      return cleared / (w * h);
+      removeSmallIslands(work);
+      return trimTransparentCanvas(work);
     }
 
     function floodFillErase(canvas, startX, startY, tolerance = 38) {
@@ -2239,8 +2245,8 @@
         showToast('모든 사진을 비웠습니다.', 'info');
       });
 
-      // 일괄 AI 박스 크롭 + 발/손 누끼
-      els.btnBatchAiBg.addEventListener('click', async () => {
+      // 일괄 자동 반짝이 크롭 (100% 로컬, 초고속)
+      els.btnBatchFastBg.addEventListener('click', () => {
         const targets = state.slots
           .map((s, idx) => ({ s, idx }))
           .filter(item => item.s.processedCanvas);
@@ -2248,35 +2254,19 @@
           showToast('먼저 사진을 업로드해 주세요.', 'info');
           return;
         }
-        els.batchLoadingTitle.textContent = 'AI가 상자 크롭 및 튀어나온 발/손 누끼를 처리 중입니다...';
-        els.batchLoadingOverlay.classList.remove('hidden');
-        let ok = 0, fail = 0, lastErr = '';
-        for (let i = 0; i < targets.length; i++) {
-          const { s, idx } = targets[i];
-          els.batchLoadingSub.textContent = `${i + 1} / ${targets.length} 처리 중 (#${idx + 1}번)`;
-          try {
-            const res = await removeBackgroundWithGeminiAI(s.origCanvas || s.processedCanvas);
-            s.processedCanvas = res;
-            ok++;
-            renderPreview();
-          } catch (err) {
-            console.error(err);
-            lastErr = err.message || '오류';
-            fail++;
-          }
+        let ok = 0;
+        for (const { s } of targets) {
+          const src = s.origCanvas || s.processedCanvas;
+          s.processedCanvas = cropToBoxOnlyLocally(src);
+          ok++;
         }
-        els.batchLoadingOverlay.classList.add('hidden');
         renderSlotGrid();
         renderPreview();
-        if (fail > 0) {
-          showToast(`${ok}장 완료, ${fail}장 실패 (${lastErr})`, 'error');
-        } else {
-          showToast(`${ok}장 모두 상자 크롭+누끼가 완료되었습니다!`, 'success');
-        }
+        showToast(`${ok}장 모두 반짝이 테두리에 맞춰 자동 크롭되었습니다! (미세 조정은 사진을 클릭하세요)`, 'success');
       });
 
-      // 일괄 AI 박스 크롭만
-      els.btnBatchFastBg.addEventListener('click', async () => {
+      // 일괄 외곽 배경 정리 (100% 로컬)
+      els.btnBatchAiBg.addEventListener('click', () => {
         const targets = state.slots
           .map((s, idx) => ({ s, idx }))
           .filter(item => item.s.processedCanvas);
@@ -2284,31 +2274,14 @@
           showToast('먼저 사진을 업로드해 주세요.', 'info');
           return;
         }
-        els.batchLoadingTitle.textContent = 'AI가 상자 테두리만 인식해 깔끔하게 크롭하고 있습니다...';
-        els.batchLoadingOverlay.classList.remove('hidden');
-        let ok = 0, fail = 0, lastErr = '';
-        for (let i = 0; i < targets.length; i++) {
-          const { s, idx } = targets[i];
-          els.batchLoadingSub.textContent = `${i + 1} / ${targets.length} 크롭 중 (#${idx + 1}번)`;
-          try {
-            const res = await cropToBoxOnlyWithAI(s.origCanvas || s.processedCanvas);
-            s.processedCanvas = res;
-            ok++;
-            renderPreview();
-          } catch (err) {
-            console.error(err);
-            lastErr = err.message || '오류';
-            fail++;
-          }
+        let ok = 0;
+        for (const { s } of targets) {
+          s.processedCanvas = cleanOuterBackgroundLocally(s.processedCanvas, 34);
+          ok++;
         }
-        els.batchLoadingOverlay.classList.add('hidden');
         renderSlotGrid();
         renderPreview();
-        if (fail > 0) {
-          showToast(`${ok}장 크롭 완료, ${fail}장 실패 (${lastErr})`, 'error');
-        } else {
-          showToast(`${ok}장 모두 상자 형태로 크롭되었습니다!`, 'success');
-        }
+        showToast(`${ok}장 모두 외곽 배경이 깔끔하게 정리되었습니다!`, 'success');
       });
 
       // 3) 배경 & 장식 컨트롤
@@ -2589,42 +2562,65 @@
         drawEditorCanvas();
       });
 
-      // 모달 내 AI 박스 크롭 + 발/손 누끼
-      els.btnEditorAiRemove.addEventListener('click', async () => {
-        els.editorAiLoader.classList.remove('hidden');
-        try {
-          pushEditorUndo();
-          const resultCanvas = await removeBackgroundWithGeminiAI(editorState.workCanvas);
-          editorState.workCanvas = resultCanvas;
-          editorState.origCanvas = cloneCanvas(resultCanvas);
-          resetCropRect();
-          drawEditorCanvas();
-          showToast('상자 크롭 및 튀어나온 신체 누끼가 완료되었습니다!', 'success');
-        } catch (err) {
-          console.error(err);
-          showToast(`AI 처리 실패 (${err.message || '오류'}). 빨간 크롭 박스로 직접 잘라주세요.`, 'error');
-        } finally {
-          els.editorAiLoader.classList.add('hidden');
-        }
+      // 모달 내 반짝이 테두리 4점 자동 맞추기 (100% 로컬)
+      els.btnEditorAutoCorner.addEventListener('click', () => {
+        if (!editorState.workCanvas) return;
+        setEditorTool('crop');
+        editorState.cropQuad = detectBoxQuadLocally(editorState.workCanvas);
+        drawEditorCanvas();
+        showToast('반짝이 테두리에 4점을 맞췄습니다. 확인 후 [자르기] 또는 [전체 일괄 적용]을 누르세요!', 'success');
       });
 
-      // 모달 내 AI 상자 형태로만 깔끔하게 크롭
-      els.btnEditorAutoCorner.addEventListener('click', async () => {
-        els.editorAiLoader.classList.remove('hidden');
-        try {
-          pushEditorUndo();
-          const resultCanvas = await cropToBoxOnlyWithAI(editorState.workCanvas);
-          editorState.workCanvas = resultCanvas;
-          editorState.origCanvas = cloneCanvas(resultCanvas);
-          resetCropRect();
-          drawEditorCanvas();
-          showToast('상자 형태에 딱 맞게 자동 크롭되었습니다!', 'success');
-        } catch (err) {
-          console.error(err);
-          showToast(`상자 자동 인식 실패 (${err.message || '오류'}). 수동 크롭을 사용해 주세요.`, 'error');
-        } finally {
-          els.editorAiLoader.classList.add('hidden');
-        }
+      // 모달 내 현재 4점 크롭 모양을 전체 사진에 일괄 적용 (같은 구도 촬영 시 최고 효율!)
+      els.btnEditorApplyAllCrop.addEventListener('click', () => {
+        if (!editorState.workCanvas || !editorState.cropQuad) return;
+        const w = editorState.workCanvas.width;
+        const h = editorState.workCanvas.height;
+        const q = editorState.cropQuad;
+
+        // 현재 4점의 정규화 비율(0~1) 계산
+        const normQuad = {
+          tl: { x: q.tl.x / w, y: q.tl.y / h },
+          tr: { x: q.tr.x / w, y: q.tr.y / h },
+          br: { x: q.br.x / w, y: q.br.y / h },
+          bl: { x: q.bl.x / w, y: q.bl.y / h },
+        };
+
+        let count = 0;
+        state.slots.forEach((slot) => {
+          const src = slot.origCanvas || slot.processedCanvas;
+          if (!src) return;
+          const sw = src.width, sh = src.height;
+          const targetQuad = {
+            tl: { x: normQuad.tl.x * sw, y: normQuad.tl.y * sh },
+            tr: { x: normQuad.tr.x * sw, y: normQuad.tr.y * sh },
+            br: { x: normQuad.br.x * sw, y: normQuad.br.y * sh },
+            bl: { x: normQuad.bl.x * sw, y: normQuad.bl.y * sh },
+          };
+          slot.processedCanvas = clipCanvasByQuad(src, targetQuad);
+          count++;
+        });
+
+        // 현재 편집 중인 캔버스도 동일하게 반영
+        pushEditorUndo();
+        editorState.workCanvas = clipCanvasByQuad(editorState.workCanvas, q);
+        editorState.origCanvas = clipCanvasByQuad(editorState.origCanvas, q);
+        resetCropRect();
+        drawEditorCanvas();
+        renderSlotGrid();
+        renderPreview();
+        showToast(`총 ${count}장의 사진에 동일한 반짝이 크롭 모양을 일괄 적용했습니다!`, 'success');
+      });
+
+      // 모달 내 외곽 배경 자동 정리 (100% 로컬)
+      els.btnEditorAiRemove.addEventListener('click', () => {
+        if (!editorState.workCanvas) return;
+        pushEditorUndo();
+        editorState.workCanvas = cleanOuterBackgroundLocally(editorState.workCanvas, editorState.wandTol);
+        editorState.origCanvas = cloneCanvas(editorState.workCanvas);
+        resetCropRect();
+        drawEditorCanvas();
+        showToast('외곽 배경을 정리했습니다! (남은 부분은 지우개/매직완드로 다듬어 주세요)', 'success');
       });
 
       // 되돌리기 & 원본 복구
